@@ -58,6 +58,13 @@ initiated heartbeat.
             nursery.start_soon(ws_send)
         connections.remove(websocket._get_current_object())
 
+Deployment
+----------
+
+To run Quart-Trio in production you should use an ASGI server that
+supports Trio. At the moment only `Hypercorn
+<https://gitlab.com/pgjones/hypercorn>`_ does so.
+
 Contributing
 ------------
 
