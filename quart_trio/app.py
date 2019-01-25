@@ -9,6 +9,7 @@ from quart.logging import create_serving_logger
 
 from .asgi import TrioASGIHTTPConnection, TrioASGILifespan, TrioASGIWebsocketConnection
 from .request import TrioRequest, TrioWebsocket
+from .response import TrioResponse
 from .testing import TrioQuartClient
 
 
@@ -17,6 +18,7 @@ class QuartTrio(Quart):
     asgi_lifespan_class = TrioASGILifespan  # type: ignore
     asgi_websocket_class = TrioASGIWebsocketConnection
     request_class = TrioRequest
+    response_class = TrioResponse
     test_client_class = TrioQuartClient
     websocket_class = TrioWebsocket
 
