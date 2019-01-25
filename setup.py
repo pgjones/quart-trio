@@ -8,7 +8,7 @@ with open(os.path.join(PROJECT_ROOT, 'README.rst')) as file_:
     long_description = file_.read()
 
 INSTALL_REQUIRES = [
-    'hypercorn[trio]',
+    'hypercorn[trio] >= 0.5.0',
     'quart >= 0.7.0',
     'trio >= 0.9.0',
 ]

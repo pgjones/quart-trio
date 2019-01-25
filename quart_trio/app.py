@@ -1,10 +1,9 @@
 import warnings
-from functools import partial
 from typing import Any, Optional
 
-import hypercorn.trio.run
 import trio
 from hypercorn.config import Config as HyperConfig
+from hypercorn.trio import serve
 from quart import Quart
 from quart.logging import create_serving_logger
 
@@ -29,12 +28,9 @@ class QuartTrio(Quart):
         host: str = "127.0.0.1",
         port: int = 5000,
         debug: Optional[bool] = None,
-        access_log_format: str = "%(h)s %(r)s %(s)s %(b)s %(D)s",
-        keep_alive_timeout: int = 5,
-        use_reloader: bool = False,
+        use_reloader: bool = True,
         ca_certs: Optional[str] = None,
         certfile: Optional[str] = None,
-        ciphers: Optional[str] = None,
         keyfile: Optional[str] = None,
         **kwargs: Any,
     ) -> None:
@@ -47,10 +43,7 @@ class QuartTrio(Quart):
             host: Hostname to listen on. By default this is loopback
                 only, use 0.0.0.0 to have the server listen externally.
             port: Port number to listen on.
-            access_log_format: The format to use for the access log,
-                by default this is %(h)s %(r)s %(s)s %(b)s %(D)s.
-            keep_alive_timeout: Timeout in seconds to keep an inactive
-                connection before closing.
+            debug: If set enable (or disable) debug mode and debug output.
             use_reloader: Automatically reload on code changes.
             ca_certs: Path to the SSL CA certificate file.
             certfile: Path to the SSL certificate file.
@@ -59,35 +52,23 @@ class QuartTrio(Quart):
         """
         if kwargs:
             warnings.warn(
-                "Additional arguments, {}, are not yet supported".format(",".join(kwargs.keys()))
+                f"Additional arguments, {','.join(kwargs.keys())}, are not supported.\n"
+                "They may be supported by Hypercorn, which is the ASGI server Quart "
+                "uses by default. This method is meant for development and debugging."
             )
         config = HyperConfig()
-        config.access_log_format = access_log_format
+        config.access_log_format = "%(h)s %(r)s %(s)s %(b)s %(D)s"
         config.access_logger = create_serving_logger()
+        config.bind = [f"{host}:{port}"]
         config.ca_certs = ca_certs
         config.certfile = certfile
-        if ciphers is not None:
-            config.ciphers = ciphers
         if debug is not None:
             config.debug = debug
-        config.error_logger = config.access_logger
-        config.host = host
-        config.keep_alive_timeout = keep_alive_timeout
+        config.error_logger = config.access_logger  # type: ignore
         config.keyfile = keyfile
-        config.port = port
         config.use_reloader = use_reloader
 
         scheme = "http" if config.ssl_enabled is None else "https"
-        print(  # noqa: T001
-            "Running on {}://{}:{} (CTRL + C to quit)".format(scheme, config.host, config.port)
-        )
+        print("Running on {}://{} (CTRL + C to quit)".format(scheme, config.bind[0]))  # noqa: T001
 
-        # These next two lines are a messy hack, whilst the Hypercorn
-        # library interface is finalised.
-        config.application_path = None
-        hypercorn.trio.run.load_application = lambda *_: self
-        try:
-            trio.run(partial(hypercorn.trio.run.run_single, config))
-        finally:
-            # Reset the first request, so as to enable reuse.
-            self._got_first_request = False
+        trio.run(serve, self, config)
