@@ -58,6 +58,20 @@ initiated heartbeat.
             nursery.start_soon(ws_send)
         connections.remove(websocket._get_current_object())
 
+Background Tasks
+~~~~~~~~~~~~~~~~
+
+To start a task in Trio you need a nursery, for a background task you
+need a nursery that exists after the request has completed. In
+Quart-Trio this nursery exists on the app,
+
+.. code-block:: python
+
+    @app.route("/")
+    async def trigger_job():
+        app.nursery.start_soon(background_task)
+        return "Started", 201
+
 Deployment
 ----------
 

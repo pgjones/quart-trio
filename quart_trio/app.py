@@ -7,13 +7,14 @@ from hypercorn.trio import serve
 from quart import Quart
 from quart.logging import create_serving_logger
 
-from .asgi import TrioASGIHTTPConnection, TrioASGIWebsocketConnection
+from .asgi import TrioASGIHTTPConnection, TrioASGILifespan, TrioASGIWebsocketConnection
 from .request import TrioRequest, TrioWebsocket
 from .testing import TrioQuartClient
 
 
 class QuartTrio(Quart):
     asgi_http_class = TrioASGIHTTPConnection
+    asgi_lifespan_class = TrioASGILifespan
     asgi_websocket_class = TrioASGIWebsocketConnection
     request_class = TrioRequest
     test_client_class = TrioQuartClient
