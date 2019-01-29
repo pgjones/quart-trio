@@ -1,6 +1,7 @@
 from typing import AnyStr, Optional
 
 import trio
+from quart.exceptions import RequestTimeout
 from quart.wrappers.request import Body, Request, Websocket
 
 
@@ -20,8 +21,6 @@ class TrioRequest(Request):
         with trio.move_on_after(self.body_timeout) as cancel_scope:
             return await self.body
         if cancel_scope.cancelled_caught:
-            from ..exceptions import RequestTimeout
-
             raise RequestTimeout()
 
 
