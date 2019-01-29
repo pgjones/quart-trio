@@ -33,7 +33,7 @@ class TrioQuartClient(QuartClient):
         return await self.app.handle_request(request)
 
     @asynccontextmanager
-    async def websocket(
+    async def websocket(  # type: ignore
         self,
         path: str,
         *,
@@ -58,7 +58,7 @@ class TrioQuartClient(QuartClient):
             websocket_client.accept,
         )
         adapter = self.app.create_url_adapter(websocket)
-        url_rule, _ = adapter.match()
+        url_rule, _ = adapter.match()  # type: ignore
         if not url_rule.is_websocket:
             raise BadRequest()
 

@@ -9,7 +9,7 @@ with open(os.path.join(PROJECT_ROOT, 'README.rst')) as file_:
 
 INSTALL_REQUIRES = [
     'hypercorn[trio] >= 0.5.0',
-    'quart >= 0.7.0',
+    'quart >= 0.8.0',
     'trio >= 0.9.0',
 ]
 

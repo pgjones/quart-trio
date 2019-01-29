@@ -5,8 +5,10 @@ from quart.wrappers.request import Body, Request, Websocket
 
 
 class TrioBody(Body):
-    def __init__(self, max_content_length: Optional[int]) -> None:
-        super().__init__(max_content_length)
+    def __init__(
+        self, expected_content_length: Optional[int], max_content_length: Optional[int]
+    ) -> None:
+        super().__init__(expected_content_length, max_content_length)
         self._complete = trio.Event()
         self._has_data = trio.Event()
 

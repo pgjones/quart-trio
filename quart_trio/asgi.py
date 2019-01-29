@@ -12,18 +12,18 @@ if TYPE_CHECKING:
 
 class TrioASGIHTTPConnection(ASGIHTTPConnection):
     async def __call__(self, receive: Callable, send: Callable) -> None:
-        request = self._create_request_from_scope()
+        request = self._create_request_from_scope(send)
         async with trio.open_nursery() as nursery:
             nursery.start_soon(self.handle_messages, nursery, request, receive)
             nursery.start_soon(self.handle_request, nursery, request, send)
 
-    async def handle_messages(
+    async def handle_messages(  # type: ignore
         self, nursery: trio._core._run.Nursery, request: Request, receive: Callable
     ) -> None:
         await super().handle_messages(request, receive)
         nursery.cancel_scope.cancel()
 
-    async def handle_request(
+    async def handle_request(  # type: ignore
         self, nursery: trio._core._run.Nursery, request: Request, send: Callable
     ) -> None:
         response = await self.app.handle_request(request)
@@ -46,7 +46,9 @@ class TrioASGIWebsocketConnection(ASGIWebsocketConnection):
             nursery.start_soon(self.handle_messages, nursery, receive)
             nursery.start_soon(self.handle_websocket, nursery, websocket, send)
 
-    async def handle_messages(self, nursery: trio._core._run.Nursery, receive: Callable) -> None:
+    async def handle_messages(  # type: ignore
+        self, nursery: trio._core._run.Nursery, receive: Callable
+    ) -> None:
         while True:
             event = await receive()
             if event["type"] == "websocket.receive":
@@ -71,7 +73,7 @@ class TrioASGIWebsocketConnection(ASGIWebsocketConnection):
             partial(self.accept_connection, send),
         )
 
-    async def handle_websocket(
+    async def handle_websocket(  # type: ignore
         self, nursery: trio._core._run.Nursery, websocket: Websocket, send: Callable
     ) -> None:
         await super().handle_websocket(websocket, send)
@@ -84,7 +86,7 @@ class TrioASGILifespan:
 
     async def __call__(self, receive: Callable, send: Callable) -> None:
         async with trio.open_nursery() as nursery:
-            self.app.nursery = nursery
+            self.app.nursery = nursery  # type: ignore
             while True:
                 event = await receive()
                 if event["type"] == "lifespan.startup":

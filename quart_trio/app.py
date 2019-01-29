@@ -14,7 +14,7 @@ from .testing import TrioQuartClient
 
 class QuartTrio(Quart):
     asgi_http_class = TrioASGIHTTPConnection
-    asgi_lifespan_class = TrioASGILifespan
+    asgi_lifespan_class = TrioASGILifespan  # type: ignore
     asgi_websocket_class = TrioASGIWebsocketConnection
     request_class = TrioRequest
     test_client_class = TrioQuartClient
@@ -24,7 +24,7 @@ class QuartTrio(Quart):
         super().__init__(*args, **kwargs)
         self._first_request_lock = trio.Lock()
 
-    def run(
+    def run(  # type: ignore
         self,
         host: str = "127.0.0.1",
         port: int = 5000,
@@ -59,7 +59,7 @@ class QuartTrio(Quart):
             )
         config = HyperConfig()
         config.access_log_format = "%(h)s %(r)s %(s)s %(b)s %(D)s"
-        config.access_logger = create_serving_logger()
+        config.access_logger = create_serving_logger()  # type: ignore
         config.bind = [f"{host}:{port}"]
         config.ca_certs = ca_certs
         config.certfile = certfile
