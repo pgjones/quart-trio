@@ -15,7 +15,7 @@ INSTALL_REQUIRES = [
 
 setup(
     name='Quart-Trio',
-    version='0.1.0',
+    version='0.2.0',
     python_requires='>=3.7.0',
     description="A Quart extension to provide trio support.",
     long_description=long_description,
