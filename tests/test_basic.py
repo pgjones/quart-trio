@@ -1,10 +1,10 @@
 from pathlib import Path
 
 import pytest
+from py._path.local import LocalPath
 from quart import abort, Quart, ResponseReturnValue, send_file, websocket
 from quart.testing import WebsocketResponse
 
-from py._path.local import LocalPath
 from quart_trio import QuartTrio
 
 
