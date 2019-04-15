@@ -6,6 +6,7 @@ from hypercorn.config import Config as HyperConfig
 from hypercorn.trio import serve
 from quart import Quart
 from quart.logging import create_serving_logger
+from quart.wrappers import Request, Response, Websocket
 
 from .asgi import TrioASGIHTTPConnection, TrioASGILifespan, TrioASGIWebsocketConnection
 from .request import TrioRequest, TrioWebsocket
@@ -75,3 +76,21 @@ class QuartTrio(Quart):
         print("Running on {}://{} (CTRL + C to quit)".format(scheme, config.bind[0]))  # noqa: T001
 
         trio.run(serve, self, config)
+
+    async def handle_request(self, request: Request) -> Response:
+        async with self.request_context(request) as request_context:
+            try:
+                return await self.full_dispatch_request(request_context)
+            except trio.Cancelled:
+                raise  # Cancelled should be handled by serving code.
+            except (Exception, trio.MultiError) as error:
+                return await self.handle_exception(error)
+
+    async def handle_websocket(self, websocket: Websocket) -> Optional[Response]:
+        async with self.websocket_context(websocket) as websocket_context:
+            try:
+                return await self.full_dispatch_websocket(websocket_context)
+            except trio.Cancelled:
+                raise  # Cancelled should be handled by serving code.
+            except (Exception, trio.MultiError) as error:
+                return await self.handle_websocket_exception(error)
