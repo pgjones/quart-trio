@@ -42,4 +42,5 @@ setup(
         'pytest',
         'pytest-trio',
     ],
+    include_package_data=True,
 )
