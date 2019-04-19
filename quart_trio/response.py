@@ -38,17 +38,17 @@ class TrioFileBody(ResponseBody):
         return self
 
     async def __aexit__(self, exc_type: type, exc_value: BaseException, tb: TracebackType) -> None:
-        await self.file.__aexit__(exc_type, exc_value, tb)  # type: ignore
+        await self.file.__aexit__(exc_type, exc_value, tb)
 
     def __aiter__(self) -> "TrioFileBody":
         return self
 
     async def __anext__(self) -> bytes:
-        current = await self.file.tell()  # type: ignore
+        current = await self.file.tell()
         if current >= self.end:
             raise StopAsyncIteration()
         read_size = min(self.buffer_size, self.end - current)
-        chunk = await self.file.read(read_size)  # type: ignore
+        chunk = await self.file.read(read_size)
 
         if chunk:
             return chunk

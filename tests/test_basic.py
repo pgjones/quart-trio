@@ -35,7 +35,7 @@ async def test_index(app: Quart) -> None:
     test_client = app.test_client()
     response = await test_client.get("/")
     assert response.status_code == 200
-    assert b"index" in (await response.get_data())
+    assert b"index" in (await response.get_data())  # type: ignore
 
 
 @pytest.mark.trio

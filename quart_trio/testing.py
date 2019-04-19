@@ -58,7 +58,7 @@ class TrioQuartClient(QuartClient):
             websocket_client.accept,
         )
         adapter = self.app.create_url_adapter(websocket)
-        url_rule, _ = adapter.match()  # type: ignore
+        url_rule, _ = adapter.match()
         if not url_rule.is_websocket:
             raise BadRequest()
 
