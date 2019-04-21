@@ -1,10 +1,11 @@
 import warnings
-from typing import Any, Optional
+from typing import Any, Optional, Union
 
 import trio
 from hypercorn.config import Config as HyperConfig
 from hypercorn.trio import serve
-from quart import Quart
+from quart import Quart, request_started, websocket_started
+from quart.ctx import RequestContext, WebsocketContext
 from quart.logging import create_serving_logger
 from quart.wrappers import Request, Response, Websocket
 
@@ -86,6 +87,37 @@ class QuartTrio(Quart):
             except (Exception, trio.MultiError) as error:
                 return await self.handle_exception(error)
 
+    async def full_dispatch_request(
+        self, request_context: Optional[RequestContext] = None
+    ) -> Response:
+        """Adds pre and post processing to the request dispatching.
+
+        Arguments:
+            request_context: The request context, optional as Flask
+                omits this argument.
+        """
+        await self.try_trigger_before_first_request_functions()
+        await request_started.send(self)
+        try:
+            result = await self.preprocess_request(request_context)
+            if result is None:
+                result = await self.dispatch_request(request_context)
+        except (Exception, trio.MultiError) as error:
+            result = await self.handle_user_exception(error)
+        return await self.finalize_request(result, request_context)
+
+    async def handle_user_exception(self, error: Union[Exception, trio.MultiError]) -> Response:
+        if isinstance(error, trio.MultiError):
+            for exception in error.exceptions:
+                try:
+                    return await self.handle_user_exception(exception)
+                except Exception:
+                    pass  # No handler for this error
+            # Not found a single handler, re-raise the error
+            raise error
+        else:
+            return await super().handle_user_exception(error)
+
     async def handle_websocket(self, websocket: Websocket) -> Optional[Response]:
         async with self.websocket_context(websocket) as websocket_context:
             try:
@@ -94,3 +126,22 @@ class QuartTrio(Quart):
                 raise  # Cancelled should be handled by serving code.
             except (Exception, trio.MultiError) as error:
                 return await self.handle_websocket_exception(error)
+
+    async def full_dispatch_websocket(
+        self, websocket_context: Optional[WebsocketContext] = None
+    ) -> Optional[Response]:
+        """Adds pre and post processing to the websocket dispatching.
+
+        Arguments:
+            websocket_context: The websocket context, optional to match
+                the Flask convention.
+        """
+        await self.try_trigger_before_first_request_functions()
+        await websocket_started.send(self)
+        try:
+            result = await self.preprocess_websocket(websocket_context)
+            if result is None:
+                result = await self.dispatch_websocket(websocket_context)
+        except (Exception, trio.MultiError) as error:
+            result = await self.handle_user_exception(error)
+        return await self.finalize_websocket(result, websocket_context)
