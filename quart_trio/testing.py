@@ -1,8 +1,8 @@
 from contextlib import asynccontextmanager
-from typing import AsyncGenerator, Optional, Union
+from typing import AsyncGenerator, List, Optional, Union
 
 import trio
-from quart.datastructures import CIMultiDict
+from quart.datastructures import CIMultiDict, Headers
 from quart.exceptions import BadRequest
 from quart.testing import make_test_headers_path_and_query_string, QuartClient, WebsocketResponse
 from quart.wrappers import Request, Response, Websocket
@@ -24,8 +24,10 @@ class _TestingWebsocket:
     async def send(self, data: bytes) -> None:
         await self.server_send.send(data)
 
-    async def accept(self) -> None:
+    async def accept(self, headers: Headers, subprotocol: Optional[str]) -> None:
         self.accepted = True
+        self.accept_headers = headers
+        self.accept_subprotocol = subprotocol
 
 
 class TrioQuartClient(QuartClient):
@@ -40,6 +42,7 @@ class TrioQuartClient(QuartClient):
         headers: Optional[Union[dict, CIMultiDict]] = None,
         query_string: Optional[dict] = None,
         scheme: str = "http",
+        subprotocols: Optional[List[str]] = None,
     ) -> AsyncGenerator[_TestingWebsocket, None]:
         headers, path, query_string_bytes = make_test_headers_path_and_query_string(
             self.app, path, headers, query_string
@@ -53,6 +56,7 @@ class TrioQuartClient(QuartClient):
             query_string_bytes,
             scheme,
             headers,
+            subprotocols,
             server_receive.receive,
             client_send.send,
             websocket_client.accept,

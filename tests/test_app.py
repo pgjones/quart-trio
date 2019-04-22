@@ -25,7 +25,7 @@ def _error_app() -> QuartTrio:
 
 @pytest.mark.trio
 async def test_multi_error_handling(error_app: QuartTrio) -> None:
-    @error_app.errorhandler(TypeError)  # type: ignore
+    @error_app.errorhandler(TypeError)
     async def handler(_: Exception) -> ResponseReturnValue:
         return "", 201
 
@@ -36,7 +36,7 @@ async def test_multi_error_handling(error_app: QuartTrio) -> None:
 
 @pytest.mark.trio
 async def test_websocket_multi_error_handling(error_app: QuartTrio) -> None:
-    @error_app.errorhandler(TypeError)  # type: ignore
+    @error_app.errorhandler(TypeError)
     async def handler(_: Exception) -> ResponseReturnValue:
         return "", 201
 
