@@ -1,3 +1,12 @@
+0.3.0 2019-04-22
+----------------
+
+* Fixed import of RequestTimeout from quart.
+* Upgrade to ASGI 3.0 (Lifespan spec 2.0).
+* Bugfix prevent MultiErrors from crahsing the app.
+* Add py.typed for PEP 561 compliance.
+* Handle individual exceptions in MultiErrors.
+
 0.2.0 2019-01-29
 ----------------
 
