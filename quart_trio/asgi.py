@@ -1,10 +1,10 @@
 from functools import partial
-from typing import Callable, TYPE_CHECKING
+from typing import Callable, cast, Optional, TYPE_CHECKING
 
 import trio
 from quart.asgi import ASGIHTTPConnection, ASGIWebsocketConnection
 from quart.datastructures import CIMultiDict
-from quart.wrappers import Request, Response, Websocket  # noqa: F401
+from quart.wrappers import Request, Response, sentinel, Websocket  # noqa: F401
 
 if TYPE_CHECKING:
     from quart import Quart  # noqa: F401
@@ -27,8 +27,13 @@ class TrioASGIHTTPConnection(ASGIHTTPConnection):
         self, nursery: trio._core._run.Nursery, request: Request, send: Callable
     ) -> None:
         response = await self.app.handle_request(request)
-        if response.timeout is not None:
-            with trio.move_on_after(response.timeout):
+        if response.timeout != sentinel:
+            timeout = cast(Optional[float], response.timeout)
+        else:
+            timeout = self.app.config["RESPONSE_TIMEOUT"]
+
+        if timeout is not None:
+            with trio.move_on_after(timeout):
                 await self._send_response(send, response)
         else:
             await self._send_response(send, response)
