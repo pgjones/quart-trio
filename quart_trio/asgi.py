@@ -73,6 +73,8 @@ class TrioASGIWebsocketConnection(ASGIWebsocketConnection):
             self.scope["query_string"],
             self.scope["scheme"],
             headers,
+            self.scope.get("root_path", ""),
+            self.scope.get("http_version", "1.1"),
             self.scope.get("subprotocols", []),
             self.receive_channel.receive,
             partial(self.send_data, send),

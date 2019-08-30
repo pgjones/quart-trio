@@ -43,6 +43,8 @@ class TrioQuartClient(QuartClient):
         query_string: Optional[dict] = None,
         scheme: str = "http",
         subprotocols: Optional[List[str]] = None,
+        root_path: str = "",
+        http_version: str = "1.1",
     ) -> AsyncGenerator[_TestingWebsocket, None]:
         headers, path, query_string_bytes = make_test_headers_path_and_query_string(
             self.app, path, headers, query_string
@@ -56,6 +58,8 @@ class TrioQuartClient(QuartClient):
             query_string_bytes,
             scheme,
             headers,
+            root_path,
+            http_version,
             subprotocols,
             server_receive.receive,
             client_send.send,

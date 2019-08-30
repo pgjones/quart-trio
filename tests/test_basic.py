@@ -45,7 +45,7 @@ async def test_websocket(app: Quart) -> None:
     async with test_client.websocket("/ws/") as test_websocket:
         await test_websocket.send(data)
         result = await test_websocket.receive()
-    assert result == data
+    assert result == data  # type: ignore
 
 
 @pytest.mark.trio
