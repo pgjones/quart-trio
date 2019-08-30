@@ -1,3 +1,9 @@
+0.4.0 2019-08-30
+----------------
+
+* Bugfix ensure the response timeout has a default.
+* Support Quart >= 0.10.0
+
 0.3.0 2019-04-22
 ----------------
 
