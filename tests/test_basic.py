@@ -13,7 +13,7 @@ def app() -> Quart:
     app = QuartTrio(__name__)
 
     @app.route("/")
-    def index() -> ResponseReturnValue:
+    async def index() -> ResponseReturnValue:
         return "index"
 
     @app.websocket("/ws/")

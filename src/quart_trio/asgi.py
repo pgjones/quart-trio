@@ -3,8 +3,8 @@ from typing import Callable, cast, Optional, TYPE_CHECKING
 
 import trio
 from quart.asgi import ASGIHTTPConnection, ASGIWebsocketConnection
-from quart.datastructures import CIMultiDict
 from quart.wrappers import Request, Response, sentinel, Websocket  # noqa: F401
+from werkzeug.datastructures import Headers
 
 if TYPE_CHECKING:
     from quart import Quart  # noqa: F401
@@ -63,7 +63,7 @@ class TrioASGIWebsocketConnection(ASGIWebsocketConnection):
         nursery.cancel_scope.cancel()
 
     def _create_websocket_from_scope(self, send: Callable) -> Websocket:
-        headers = CIMultiDict()
+        headers = Headers()
         headers["Remote-Addr"] = (self.scope.get("client") or ["<local>"])[0]
         for name, value in self.scope["headers"]:
             headers.add(name.decode().title(), value.decode())

@@ -19,14 +19,11 @@ class QuartTrio(Quart):
     asgi_http_class = TrioASGIHTTPConnection
     asgi_lifespan_class = TrioASGILifespan  # type: ignore
     asgi_websocket_class = TrioASGIWebsocketConnection
+    lock_class = trio.Lock
     request_class = TrioRequest
     response_class = TrioResponse
     test_client_class = TrioQuartClient
     websocket_class = TrioWebsocket
-
-    def __init__(self, *args: Any, **kwargs: Any) -> None:
-        super().__init__(*args, **kwargs)
-        self._first_request_lock = trio.Lock()
 
     def run(  # type: ignore
         self,

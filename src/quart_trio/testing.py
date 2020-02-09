@@ -1,11 +1,12 @@
 from contextlib import asynccontextmanager
-from typing import AsyncGenerator, List, Optional, Union
+from typing import AnyStr, AsyncGenerator, List, Optional, Union
 
 import trio
-from quart.datastructures import CIMultiDict, Headers
 from quart.exceptions import BadRequest
 from quart.testing import make_test_headers_path_and_query_string, QuartClient, WebsocketResponse
 from quart.wrappers import Request, Response, Websocket
+from werkzeug.datastructures import Headers
+from werkzeug.exceptions import BadRequest as WBadRequest
 
 
 class _TestingWebsocket:
@@ -18,10 +19,10 @@ class _TestingWebsocket:
         self.client_receive = client_receive
         self.accepted = False
 
-    async def receive(self) -> bytes:
+    async def receive(self) -> AnyStr:
         return await self.client_receive.receive()
 
-    async def send(self, data: bytes) -> None:
+    async def send(self, data: AnyStr) -> None:
         await self.server_send.send(data)
 
     async def accept(self, headers: Headers, subprotocol: Optional[str]) -> None:
@@ -39,9 +40,9 @@ class TrioQuartClient(QuartClient):
         self,
         path: str,
         *,
-        headers: Optional[Union[dict, CIMultiDict]] = None,
+        headers: Optional[Union[dict, Headers]] = None,
         query_string: Optional[dict] = None,
-        scheme: str = "http",
+        scheme: str = "ws",
         subprotocols: Optional[List[str]] = None,
         root_path: str = "",
         http_version: str = "1.1",
@@ -66,8 +67,9 @@ class TrioQuartClient(QuartClient):
             websocket_client.accept,
         )
         adapter = self.app.create_url_adapter(websocket)
-        url_rule, _ = adapter.match()
-        if not url_rule.is_websocket:
+        try:
+            url_rule, _ = adapter.match()
+        except WBadRequest:
             raise BadRequest()
 
         async with trio.open_nursery() as nursery:
