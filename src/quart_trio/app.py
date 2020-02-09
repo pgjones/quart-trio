@@ -1,5 +1,6 @@
 import warnings
-from typing import Any, Optional, Union
+from functools import partial
+from typing import Any, Awaitable, Callable, Optional, Union
 
 import trio
 from hypercorn.config import Config as HyperConfig
@@ -58,6 +59,44 @@ class QuartTrio(Quart):
                 "They may be supported by Hypercorn, which is the ASGI server Quart "
                 "uses by default. This method is meant for development and debugging."
             )
+
+        task = self.run_task(host, port, debug, use_reloader, ca_certs, certfile, keyfile)
+
+        scheme = "https" if certfile is not None and keyfile is not None else "http"
+        print(f"Running on {scheme}://{host}:{port} (CTRL + C to quit)")  # noqa: T001, T002
+
+        trio.run(task)
+
+    def run_task(  # type: ignore
+        self,
+        host: str = "127.0.0.1",
+        port: int = 5000,
+        debug: Optional[bool] = None,
+        use_reloader: bool = True,
+        ca_certs: Optional[str] = None,
+        certfile: Optional[str] = None,
+        keyfile: Optional[str] = None,
+        shutdown_trigger: Optional[Callable[..., Awaitable[None]]] = None,
+    ) -> Callable[[], Awaitable[None]]:
+        """Return a task that when awaited runs this application.
+
+        This is best used for development only, see Hypercorn for
+        production servers.
+
+        Arguments:
+            host: Hostname to listen on. By default this is loopback
+                only, use 0.0.0.0 to have the server listen externally.
+            port: Port number to listen on.
+            debug: If set enable (or disable) debug mode and debug output.
+            use_reloader: Automatically reload on code changes.
+            loop: Asyncio loop to create the server in, if None, take default one.
+                If specified it is the caller's responsibility to close and cleanup the
+                loop.
+            ca_certs: Path to the SSL CA certificate file.
+            certfile: Path to the SSL certificate file.
+            keyfile: Path to the SSL key file.
+
+        """
         config = HyperConfig()
         config.access_log_format = "%(h)s %(r)s %(s)s %(b)s %(D)s"
         config.access_logger = create_serving_logger()  # type: ignore
@@ -70,10 +109,7 @@ class QuartTrio(Quart):
         config.keyfile = keyfile
         config.use_reloader = use_reloader
 
-        scheme = "http" if config.ssl_enabled is None else "https"
-        print("Running on {}://{} (CTRL + C to quit)".format(scheme, config.bind[0]))  # noqa: T001
-
-        trio.run(serve, self, config)
+        return partial(serve, self, config)
 
     async def handle_request(self, request: Request) -> Response:
         async with self.request_context(request) as request_context:
