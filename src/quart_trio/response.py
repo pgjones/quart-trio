@@ -1,9 +1,12 @@
 import os
+from inspect import isasyncgen, isgenerator
 from types import TracebackType
-from typing import Optional, Union
+from typing import AsyncGenerator, Iterable, Optional, Union
 
 import trio
-from quart.wrappers.response import _raise_if_invalid_range, Response, ResponseBody
+from quart.wrappers.response import _raise_if_invalid_range, IterableBody, Response, ResponseBody
+
+from .utils import run_sync_iterable
 
 
 class TrioFileBody(ResponseBody):
@@ -73,5 +76,22 @@ class TrioFileBody(ResponseBody):
         return self.size
 
 
+class TrioIterableBody(IterableBody):
+    def __init__(self, iterable: Union[AsyncGenerator[bytes, None], Iterable]) -> None:
+        self.iter: AsyncGenerator[bytes, None]
+        if isasyncgen(iterable):
+            self.iter = iterable  # type: ignore
+        elif isgenerator(iterable):
+            self.iter = run_sync_iterable(iterable)  # type: ignore
+        else:
+
+            async def _aiter() -> AsyncGenerator[bytes, None]:
+                for data in iterable:  # type: ignore
+                    yield data
+
+            self.iter = _aiter()
+
+
 class TrioResponse(Response):
     file_body_class = TrioFileBody  # type: ignore
+    iterable_body_class = TrioIterableBody

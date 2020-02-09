@@ -8,12 +8,14 @@ from hypercorn.trio import serve
 from quart import Quart, request_started, websocket_started
 from quart.ctx import RequestContext, WebsocketContext
 from quart.logging import create_serving_logger
+from quart.utils import is_coroutine_function
 from quart.wrappers import Request, Response, Websocket
 
 from .asgi import TrioASGIHTTPConnection, TrioASGILifespan, TrioASGIWebsocketConnection
 from .request import TrioRequest, TrioWebsocket
 from .response import TrioResponse
 from .testing import TrioQuartClient
+from .utils import run_sync
 
 
 class QuartTrio(Quart):
@@ -110,6 +112,20 @@ class QuartTrio(Quart):
         config.use_reloader = use_reloader
 
         return partial(serve, self, config)
+
+    def ensure_async(self, func: Callable[..., Any]) -> Callable[..., Awaitable[Any]]:
+        """Ensure that the returned func is async and calls the func.
+
+        .. versionadded:: 0.11
+
+        Override if you wish to change how synchronous functions are
+        run. Before Quart 0.11 this did not run the synchronous code
+        in an executor.
+        """
+        if is_coroutine_function(func):
+            return func
+        else:
+            return run_sync(func)
 
     async def handle_request(self, request: Request) -> Response:
         async with self.request_context(request) as request_context:
