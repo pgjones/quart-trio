@@ -1,3 +1,12 @@
+0.5.0 2020-02-09
+----------------
+
+* Support Python 3.8.
+* Upgrade to Quart >= 0.11.
+* Bugfix allow for no request timeouts.
+* Follow Quart and add a run_task method.
+* Add run_sync functionality.
+
 0.4.0 2019-08-30
 ----------------
 
