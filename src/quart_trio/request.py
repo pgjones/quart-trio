@@ -18,7 +18,10 @@ class TrioRequest(Request):
     body_class = TrioBody
 
     async def get_data(self, raw: bool = True) -> AnyStr:
-        with trio.move_on_after(self.body_timeout) as cancel_scope:
+        if self.body_timeout is not None:
+            with trio.move_on_after(self.body_timeout) as cancel_scope:
+                return await self.body
+        else:
             return await self.body
         if cancel_scope.cancelled_caught:
             raise RequestTimeout()
