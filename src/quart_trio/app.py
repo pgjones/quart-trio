@@ -1,6 +1,5 @@
 import warnings
-from functools import partial
-from typing import Any, Awaitable, Callable, Optional, Union
+from typing import Any, Awaitable, Callable, Coroutine, Optional, Union
 
 import trio
 from hypercorn.config import Config as HyperConfig
@@ -62,14 +61,12 @@ class QuartTrio(Quart):
                 "uses by default. This method is meant for development and debugging."
             )
 
-        task = self.run_task(host, port, debug, use_reloader, ca_certs, certfile, keyfile)
-
         scheme = "https" if certfile is not None and keyfile is not None else "http"
         print(f"Running on {scheme}://{host}:{port} (CTRL + C to quit)")  # noqa: T001, T002
 
-        trio.run(task)
+        trio.run(self.run_task, host, port, debug, use_reloader, ca_certs, certfile, keyfile)
 
-    def run_task(  # type: ignore
+    def run_task(
         self,
         host: str = "127.0.0.1",
         port: int = 5000,
@@ -79,7 +76,7 @@ class QuartTrio(Quart):
         certfile: Optional[str] = None,
         keyfile: Optional[str] = None,
         shutdown_trigger: Optional[Callable[..., Awaitable[None]]] = None,
-    ) -> Callable[[], Awaitable[None]]:
+    ) -> Coroutine[None, None, None]:
         """Return a task that when awaited runs this application.
 
         This is best used for development only, see Hypercorn for
@@ -111,7 +108,7 @@ class QuartTrio(Quart):
         config.keyfile = keyfile
         config.use_reloader = use_reloader
 
-        return partial(serve, self, config)
+        return serve(self, config)
 
     def ensure_async(self, func: Callable[..., Any]) -> Callable[..., Awaitable[Any]]:
         """Ensure that the returned func is async and calls the func.
