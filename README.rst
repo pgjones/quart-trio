@@ -116,7 +116,7 @@ This README is the best place to start, after that try opening an
 `issue <https://gitlab.com/pgjones/quart-trio/issues>`_.
 
 
-.. |Build Status| image:: https://gitlab.com/pgjones/quart-trio/badges/master/build.svg
+.. |Build Status| image:: https://gitlab.com/pgjones/quart-trio/badges/master/pipeline.svg
    :target: https://gitlab.com/pgjones/quart-trio/commits/master
 
 .. |pypi| image:: https://img.shields.io/pypi/v/quart-trio.svg
