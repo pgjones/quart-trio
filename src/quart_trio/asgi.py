@@ -59,7 +59,7 @@ class TrioASGIWebsocketConnection(ASGIWebsocketConnection):
             if event["type"] == "websocket.receive":
                 await self.send_channel.send(event.get("bytes") or event["text"])
             elif event["type"] == "websocket.disconnect":
-                return
+                break
         nursery.cancel_scope.cancel()
 
     def _create_websocket_from_scope(self, send: Callable) -> Websocket:
