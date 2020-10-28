@@ -1,5 +1,6 @@
 import warnings
-from typing import Any, Awaitable, Callable, Coroutine, Optional, Union
+from contextlib import asynccontextmanager
+from typing import Any, AsyncGenerator, Awaitable, Callable, Coroutine, Optional, Union
 
 import trio
 from hypercorn.config import Config as HyperConfig
@@ -18,6 +19,7 @@ from .utils import run_sync
 
 
 class QuartTrio(Quart):
+    nursery: trio._core.Nursery
     asgi_http_class = TrioASGIHTTPConnection
     asgi_lifespan_class = TrioASGILifespan  # type: ignore
     asgi_websocket_class = TrioASGIWebsocketConnection
@@ -123,6 +125,17 @@ class QuartTrio(Quart):
             return func
         else:
             return run_sync(func)
+
+    @asynccontextmanager
+    async def test_app(self) -> AsyncGenerator["Quart", None]:
+        async with trio.open_nursery() as nursery:
+            self.nursery = nursery
+            await self.startup()
+            try:
+                yield self
+            finally:
+                await self.shutdown()
+        self.nursery = None
 
     async def handle_request(self, request: Request, *, _preserve: bool = False) -> Response:
         async with self.request_context(request, _preserve=_preserve) as request_context:

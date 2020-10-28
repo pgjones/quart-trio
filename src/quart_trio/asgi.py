@@ -7,7 +7,7 @@ from quart.wrappers import Request, Response, sentinel, Websocket  # noqa: F401
 from werkzeug.datastructures import Headers
 
 if TYPE_CHECKING:
-    from quart import Quart  # noqa: F401
+    from quart_trio import QuartTrio  # noqa: F401
 
 
 class TrioASGIHTTPConnection(ASGIHTTPConnection):
@@ -41,7 +41,7 @@ class TrioASGIHTTPConnection(ASGIHTTPConnection):
 
 
 class TrioASGIWebsocketConnection(ASGIWebsocketConnection):
-    def __init__(self, app: "Quart", scope: dict) -> None:
+    def __init__(self, app: "QuartTrio", scope: dict) -> None:
         super().__init__(app, scope)
         self.send_channel, self.receive_channel = trio.open_memory_channel(10)
 
@@ -89,12 +89,12 @@ class TrioASGIWebsocketConnection(ASGIWebsocketConnection):
 
 
 class TrioASGILifespan:
-    def __init__(self, app: "Quart", scope: dict) -> None:
+    def __init__(self, app: "QuartTrio", scope: dict) -> None:
         self.app = app
 
     async def __call__(self, receive: Callable, send: Callable) -> None:
         async with trio.open_nursery() as nursery:
-            self.app.nursery = nursery  # type: ignore
+            self.app.nursery = nursery
             while True:
                 event = await receive()
                 if event["type"] == "lifespan.startup":
