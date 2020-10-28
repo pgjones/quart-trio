@@ -124,8 +124,8 @@ class QuartTrio(Quart):
         else:
             return run_sync(func)
 
-    async def handle_request(self, request: Request) -> Response:
-        async with self.request_context(request) as request_context:
+    async def handle_request(self, request: Request, *, _preserve: bool = False) -> Response:
+        async with self.request_context(request, _preserve=_preserve) as request_context:
             try:
                 return await self.full_dispatch_request(request_context)
             except trio.Cancelled:
@@ -164,8 +164,10 @@ class QuartTrio(Quart):
         else:
             return await super().handle_user_exception(error)
 
-    async def handle_websocket(self, websocket: Websocket) -> Optional[Response]:
-        async with self.websocket_context(websocket) as websocket_context:
+    async def handle_websocket(
+        self, websocket: Websocket, *, _preserve: bool = False
+    ) -> Optional[Response]:
+        async with self.websocket_context(websocket, _preserve=_preserve) as websocket_context:
             try:
                 return await self.full_dispatch_websocket(websocket_context)
             except trio.Cancelled:
