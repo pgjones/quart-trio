@@ -5,13 +5,27 @@ from quart.exceptions import RequestTimeout
 from quart.wrappers.request import Body, Request, Websocket
 
 
+class EventWrapper:
+    def __init__(self) -> None:
+        self._event = trio.Event()
+
+    async def clear(self) -> None:
+        self._event = trio.Event()
+
+    async def wait(self) -> None:
+        await self._event.wait()
+
+    async def set(self) -> None:
+        self._event.set()
+
+
 class TrioBody(Body):
     def __init__(
         self, expected_content_length: Optional[int], max_content_length: Optional[int]
     ) -> None:
         super().__init__(expected_content_length, max_content_length)
-        self._complete = trio.Event()
-        self._has_data = trio.Event()
+        self._complete = EventWrapper()  # type: ignore
+        self._has_data = EventWrapper()  # type: ignore
 
 
 class TrioRequest(Request):
