@@ -1,6 +1,6 @@
 import pytest
-
 from quart.exceptions import RequestEntityTooLarge
+
 from quart_trio.request import TrioBody
 
 
