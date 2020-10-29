@@ -1,3 +1,12 @@
+0.6.0 2020-10-29
+----------------
+
+* Bugfix logger setup with run and run_task.
+* Introduce a test_app method, this ensures lifespan aspects are run
+  (background tasks, before/after serving).
+* Implement request body init fixing issues with asyncio usage.
+* Add more detailed documentation.
+
 0.5.1 2020-03-26
 ----------------
 
