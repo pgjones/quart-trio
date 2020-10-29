@@ -1,7 +1,7 @@
 Quart-Trio
 ==========
 
-|Build Status| |pypi| |python| |license|
+|Build Status| |docs| |pypi| |python| |license|
 
 Quart-Trio is an extension for `Quart
 <https://gitlab.com/pgjones/quart>`_ to support the `Trio
@@ -123,6 +123,9 @@ This README is the best place to start, after that try opening an
 
 .. |Build Status| image:: https://gitlab.com/pgjones/quart-trio/badges/master/pipeline.svg
    :target: https://gitlab.com/pgjones/quart-trio/commits/master
+
+.. |docs| image:: https://img.shields.io/badge/docs-passing-brightgreen.svg
+   :target: https://pgjones.gitlab.io/quart-trio/
 
 .. |pypi| image:: https://img.shields.io/pypi/v/quart-trio.svg
    :target: https://pypi.python.org/pypi/Quart-Trio/
