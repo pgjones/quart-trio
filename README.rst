@@ -4,7 +4,7 @@ Quart-Trio
 |Build Status| |docs| |pypi| |python| |license|
 
 Quart-Trio is an extension for `Quart
-<https://gitlab.com/pgjones/quart>`_ to support the `Trio
+<https://gitlab.com/pgjones/quart>`__ to support the `Trio
 <https://trio.readthedocs.io/en/latest/>`_ event loop. This is an
 alternative to using the asyncio event loop present in the Python
 standard library and supported by default in Quart.
@@ -77,9 +77,9 @@ this will check the code style and run the tests.
 Help
 ----
 
-The `Quart-Trio <https://pgjones.gitlab.io/quart-trio/>`_ and `Quart
-<https://pgjones.gitlab.io/quart/>`_ documentation are the best places
-to start, after that try searching `stack overflow
+The `Quart-Trio <https://pgjones.gitlab.io/quart-trio/>`__ and `Quart
+<https://pgjones.gitlab.io/quart/>`__ documentation are the best
+places to start, after that try searching `stack overflow
 <https://stackoverflow.com/questions/tagged/quart>`_, if you still
 can't find an answer please `open an issue
 <https://gitlab.com/pgjones/quart-trio/issues>`_.
