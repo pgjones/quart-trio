@@ -6,4 +6,5 @@ include README.rst
 include setup.cfg
 recursive-include src/quart_trio *.py
 recursive-include tests *.py
+recursive-exclude docs *
 exclude .gitlab-ci.yml

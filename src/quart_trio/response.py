@@ -16,9 +16,6 @@ class TrioFileBody(ResponseBody):
     yield bytes, which this wrapper does for a file. In addition it
     allows a range to be set on the file, thereby supporting
     conditional requests.
-
-    Attributes:
-        buffer_size: Size in bytes to load per iteration.
     """
 
     buffer_size = 8192
