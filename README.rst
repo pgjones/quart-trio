@@ -9,89 +9,49 @@ Quart-Trio is an extension for `Quart
 alternative to using the asyncio event loop present in the Python
 standard library and supported by default in Quart.
 
-Usage
------
+Quickstart
+----------
 
-To enable trio support, simply use the ``QuartTrio`` app class rather
-than the ``Quart`` app class,
+QuartTrio can be installed via `pip
+<https://docs.python.org/3/installing/index.html>`_,
 
-.. code-block:: python
+.. code-block:: console
 
-    import trio
-    from quart_trio import QuartTrio
+    $ pip install quart-trio
 
-    app = QuartTrio(__name__)
+and requires Python 3.7.0 or higher (see `python version support
+<https://pgjones.gitlab.io/quart/discussion/python_versions.html>`_ for
+reasoning).
 
-    @app.route('/')
-    async def index():
-        await trio.sleep(0.01)
-        async with trio.open_nursery as nursery:
-            nursery.start_soon(...)
-        return ...
-
-A more concrete example of Quart Trio in usage, which also
-demonstrates the clarity of the Trio API is given below. This example
-demonstrates a simple broadcast to all chat server with a server
-initiated heartbeat.
+A minimal Quart example is,
 
 .. code-block:: python
 
-    import trio
     from quart import websocket
     from quart_trio import QuartTrio
 
     app = QuartTrio(__name__)
 
-    connections = set()
-
-    async def ws_receive():
-        while True:
-            data = await websocket.receive()
-            for connection in connections:
-                await connection.send(data)
-
-    async def ws_send():
-        while True:
-            await trio.sleep(1)
-            await websocket.send("Heatbeat")
+    @app.route('/')
+    async def hello():
+        return 'hello'
 
     @app.websocket('/ws')
     async def ws():
-        connections.add(websocket._get_current_object())
-        async with trio.open_nursery() as nursery:
-            nursery.start_soon(ws_receive)
-            nursery.start_soon(ws_send)
-        connections.remove(websocket._get_current_object())
+        while True:
+            await websocket.send('hello')
 
-Background Tasks
-~~~~~~~~~~~~~~~~
+    app.run()
 
-To start a task in Trio you need a nursery, for a background task you
-need a nursery that exists after the request has completed. In
-Quart-Trio this nursery exists on the app,
+if the above is in a file called ``app.py`` it can be run as,
 
-.. code-block:: python
+.. code-block:: console
 
-    @app.route("/")
-    async def trigger_job():
-        app.nursery.start_soon(background_task)
-        return "Started", 201
+    $ python app.py
 
-MultiErrors
-~~~~~~~~~~~
-
-MultiErrors raised during the handling of a request or websocket are
-caught and the exceptions contianed are checked against the handlers,
-the first handled exception will be returned. This may lead to
-non-deterministic code in that it will depend on which error is raised
-first (in the case that multi errors can be handled).
-
-Deployment
-----------
-
-To run Quart-Trio in production you should use an ASGI server that
-supports Trio. At the moment only `Hypercorn
-<https://gitlab.com/pgjones/hypercorn>`_ does so.
+To deploy in a production setting see the `deployment
+<https://pgjones.gitlab.io/quart-trio/tutorials/deployment.html>`_
+documentation.
 
 Contributing
 ------------
@@ -117,8 +77,12 @@ this will check the code style and run the tests.
 Help
 ----
 
-This README is the best place to start, after that try opening an
-`issue <https://gitlab.com/pgjones/quart-trio/issues>`_.
+The `Quart-Trio <https://pgjones.gitlab.io/quart-trio/>`_ and `Quart
+<https://pgjones.gitlab.io/quart/>`_ documentation are the best places
+to start, after that try searching `stack overflow
+<https://stackoverflow.com/questions/tagged/quart>`_, if you still
+can't find an answer please `open an issue
+<https://gitlab.com/pgjones/quart-trio/issues>`_.
 
 
 .. |Build Status| image:: https://gitlab.com/pgjones/quart-trio/badges/master/pipeline.svg

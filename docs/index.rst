@@ -14,6 +14,12 @@ open `issues <https://gitlab.com/pgjones/quart-trio/issues>`_ or
 propose `merge requests
 <https://gitlab.com/pgjones/quart-trio/merge_requests>`_.
 
+.. note::
+
+   Quart-Trio is a Quart extension, therefore this documentation only
+   mentions differences to Quart. Please consider the `Quart docs
+   <https://pgjones.gitlab.io/quart/>`_ for general usage information.
+
 
 Contents
 --------
