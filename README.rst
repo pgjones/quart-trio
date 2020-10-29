@@ -17,6 +17,7 @@ than the ``Quart`` app class,
 
 .. code-block:: python
 
+    import trio
     from quart_trio import QuartTrio
 
     app = QuartTrio(__name__)
@@ -34,6 +35,10 @@ demonstrates a simple broadcast to all chat server with a server
 initiated heartbeat.
 
 .. code-block:: python
+
+    import trio
+    from quart import websocket
+    from quart_trio import QuartTrio
 
     app = QuartTrio(__name__)
 
