@@ -1,3 +1,9 @@
+0.7.0 2020-12-06
+----------------
+
+* Officially support Python 3.9.
+* Support Quart 0.14.0 or greater.
+
 0.6.0 2020-10-29
 ----------------
 
