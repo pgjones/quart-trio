@@ -10,7 +10,7 @@ py38:
   - pip install tox
   - tox -e py38
 
-py38:
+py39:
   image: python:3.9
   script:
   - pip install tox
