@@ -79,6 +79,7 @@ class TrioASGIWebsocketConnection(ASGIWebsocketConnection):
             self.receive_channel.receive,
             partial(self.send_data, send),
             partial(self.accept_connection, send),
+            self.scope,
         )
 
     async def handle_websocket(  # type: ignore

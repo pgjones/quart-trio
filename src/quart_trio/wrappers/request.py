@@ -2,7 +2,7 @@ from typing import AnyStr, Optional
 
 import trio
 from quart.exceptions import RequestEntityTooLarge, RequestTimeout
-from quart.wrappers.request import Body, Request, Websocket
+from quart.wrappers.request import Body, Request
 
 
 class EventWrapper:
@@ -50,9 +50,3 @@ class TrioRequest(Request):
             return await self.body
         if cancel_scope.cancelled_caught:
             raise RequestTimeout()
-
-
-class TrioWebsocket(Websocket):
-    async def send(self, data: AnyStr) -> None:
-        await self.accept()
-        await self._send(data)

@@ -1,6 +1,5 @@
 import warnings
-from contextlib import asynccontextmanager
-from typing import Any, AsyncGenerator, Awaitable, Callable, Coroutine, Optional, Union
+from typing import Any, Awaitable, Callable, Coroutine, Optional, Union
 
 import trio
 from hypercorn.config import Config as HyperConfig
@@ -12,10 +11,9 @@ from quart.utils import is_coroutine_function
 from quart.wrappers import Request, Response, Websocket
 
 from .asgi import TrioASGIHTTPConnection, TrioASGILifespan, TrioASGIWebsocketConnection
-from .request import TrioRequest, TrioWebsocket
-from .response import TrioResponse
-from .testing import TrioQuartClient
+from .testing import TrioClient, TrioTestApp
 from .utils import run_sync
+from .wrappers import TrioRequest, TrioResponse, TrioWebsocket
 
 
 class QuartTrio(Quart):
@@ -26,7 +24,8 @@ class QuartTrio(Quart):
     lock_class = trio.Lock
     request_class = TrioRequest
     response_class = TrioResponse
-    test_client_class = TrioQuartClient
+    test_app_class = TrioTestApp  # type: ignore
+    test_client_class = TrioClient
     websocket_class = TrioWebsocket
 
     def run(  # type: ignore
@@ -126,19 +125,8 @@ class QuartTrio(Quart):
         else:
             return run_sync(func)
 
-    @asynccontextmanager
-    async def test_app(self) -> AsyncGenerator["Quart", None]:
-        async with trio.open_nursery() as nursery:
-            self.nursery = nursery
-            await self.startup()
-            try:
-                yield self
-            finally:
-                await self.shutdown()
-        self.nursery = None
-
-    async def handle_request(self, request: Request, *, _preserve: bool = False) -> Response:
-        async with self.request_context(request, _preserve=_preserve) as request_context:
+    async def handle_request(self, request: Request) -> Response:
+        async with self.request_context(request) as request_context:
             try:
                 return await self.full_dispatch_request(request_context)
             except trio.Cancelled:
@@ -177,10 +165,8 @@ class QuartTrio(Quart):
         else:
             return await super().handle_user_exception(error)
 
-    async def handle_websocket(
-        self, websocket: Websocket, *, _preserve: bool = False
-    ) -> Optional[Response]:
-        async with self.websocket_context(websocket, _preserve=_preserve) as websocket_context:
+    async def handle_websocket(self, websocket: Websocket) -> Optional[Response]:
+        async with self.websocket_context(websocket) as websocket_context:
             try:
                 return await self.full_dispatch_websocket(websocket_context)
             except trio.Cancelled:

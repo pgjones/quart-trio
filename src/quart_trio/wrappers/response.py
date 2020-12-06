@@ -6,7 +6,7 @@ from typing import AsyncGenerator, Iterable, Optional, Union
 import trio
 from quart.wrappers.response import _raise_if_invalid_range, IterableBody, Response, ResponseBody
 
-from .utils import run_sync_iterable
+from ..utils import run_sync_iterable
 
 
 class TrioFileBody(ResponseBody):

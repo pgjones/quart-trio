@@ -1,7 +1,7 @@
 import pytest
 from quart.exceptions import RequestEntityTooLarge
 
-from quart_trio.request import TrioBody
+from quart_trio.wrappers.request import TrioBody
 
 
 @pytest.mark.trio
