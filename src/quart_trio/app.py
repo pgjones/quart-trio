@@ -7,8 +7,10 @@ from hypercorn.trio import serve
 from quart import Quart, request_started, websocket_started
 from quart.ctx import RequestContext, WebsocketContext
 from quart.logging import create_serving_logger
-from quart.utils import is_coroutine_function
+from quart.typing import ResponseReturnValue
 from quart.wrappers import Request, Response, Websocket
+from werkzeug.exceptions import HTTPException
+from werkzeug.wrappers import Response as WerkzeugResponse
 
 from .asgi import TrioASGIHTTPConnection, TrioASGILifespan, TrioASGIWebsocketConnection
 from .testing import TrioClient, TrioTestApp
@@ -19,12 +21,12 @@ from .wrappers import TrioRequest, TrioResponse, TrioWebsocket
 class QuartTrio(Quart):
     nursery: trio._core.Nursery
     asgi_http_class = TrioASGIHTTPConnection
-    asgi_lifespan_class = TrioASGILifespan  # type: ignore
+    asgi_lifespan_class = TrioASGILifespan
     asgi_websocket_class = TrioASGIWebsocketConnection
     lock_class = trio.Lock
     request_class = TrioRequest
     response_class = TrioResponse
-    test_app_class = TrioTestApp  # type: ignore
+    test_app_class = TrioTestApp
     test_client_class = TrioClient
     websocket_class = TrioWebsocket
 
@@ -111,21 +113,19 @@ class QuartTrio(Quart):
 
         return serve(self, config)
 
-    def ensure_async(self, func: Callable[..., Any]) -> Callable[..., Awaitable[Any]]:
-        """Ensure that the returned func is async and calls the func.
+    def sync_to_async(self, func: Callable[..., Any]) -> Callable[..., Awaitable[Any]]:
+        """Return a async function that will run the synchronous function *func*.
 
-        .. versionadded:: 0.11
+        This can be used as so,::
 
-        Override if you wish to change how synchronous functions are
-        run. Before Quart 0.11 this did not run the synchronous code
-        in an executor.
+            result = await app.sync_to_async(func)(*args, **kwargs)
+
+        Override this method to change how the app converts sync code
+        to be asynchronously callable.
         """
-        if is_coroutine_function(func):
-            return func
-        else:
-            return run_sync(func)
+        return run_sync(func)
 
-    async def handle_request(self, request: Request) -> Response:
+    async def handle_request(self, request: Request) -> Union[Response, WerkzeugResponse]:
         async with self.request_context(request) as request_context:
             try:
                 return await self.full_dispatch_request(request_context)
@@ -136,7 +136,7 @@ class QuartTrio(Quart):
 
     async def full_dispatch_request(
         self, request_context: Optional[RequestContext] = None
-    ) -> Response:
+    ) -> Union[Response, WerkzeugResponse]:
         """Adds pre and post processing to the request dispatching.
 
         Arguments:
@@ -153,7 +153,9 @@ class QuartTrio(Quart):
             result = await self.handle_user_exception(error)
         return await self.finalize_request(result, request_context)
 
-    async def handle_user_exception(self, error: Union[Exception, trio.MultiError]) -> Response:
+    async def handle_user_exception(
+        self, error: Union[Exception, trio.MultiError]
+    ) -> Union[HTTPException, ResponseReturnValue]:
         if isinstance(error, trio.MultiError):
             for exception in error.exceptions:
                 try:
@@ -165,7 +167,9 @@ class QuartTrio(Quart):
         else:
             return await super().handle_user_exception(error)
 
-    async def handle_websocket(self, websocket: Websocket) -> Optional[Response]:
+    async def handle_websocket(
+        self, websocket: Websocket
+    ) -> Optional[Union[Response, WerkzeugResponse]]:
         async with self.websocket_context(websocket) as websocket_context:
             try:
                 return await self.full_dispatch_websocket(websocket_context)
@@ -176,7 +180,7 @@ class QuartTrio(Quart):
 
     async def full_dispatch_websocket(
         self, websocket_context: Optional[WebsocketContext] = None
-    ) -> Optional[Response]:
+    ) -> Optional[Union[Response, WerkzeugResponse]]:
         """Adds pre and post processing to the websocket dispatching.
 
         Arguments:

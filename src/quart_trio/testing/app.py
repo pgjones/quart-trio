@@ -5,7 +5,7 @@ from types import TracebackType
 import trio
 from quart.app import Quart
 from quart.testing.app import DEFAULT_TIMEOUT, LifespanFailure
-from quart.testing.client import QuartClient
+from quart.typing import TestClientProtocol
 
 
 class TrioTestApp:
@@ -22,13 +22,14 @@ class TrioTestApp:
         self._shutdown = trio.Event()
         self._app_send_channel, self._app_receive_channel = trio.open_memory_channel(10)
         self._nursery_manager: trio._core._run.NurseryManager
+        self._nursery: trio.Nursery
 
-    def test_client(self) -> "QuartClient":
+    def test_client(self) -> TestClientProtocol:
         return self.app.test_client()
 
-    async def startup(self, nursery: trio.Nursery) -> None:
+    async def startup(self) -> None:
         scope = {"type": "lifespan", "asgi": {"spec_version": "2.0"}}
-        nursery.start_soon(self.app, scope, self._asgi_receive, self._asgi_send)
+        self._nursery.start_soon(self.app, scope, self._asgi_receive, self._asgi_send)
         await self._app_send_channel.send({"type": "lifespan.startup"})
         with trio.fail_after(self.startup_timeout):
             await self._startup.wait()
@@ -40,8 +41,8 @@ class TrioTestApp:
 
     async def __aenter__(self) -> "TrioTestApp":
         self._nursery_manager = trio.open_nursery()
-        nursery = await self._nursery_manager.__aenter__()
-        await self.startup(nursery)
+        self._nursery = await self._nursery_manager.__aenter__()
+        await self.startup()
         return self
 
     async def __aexit__(self, exc_type: type, exc_value: BaseException, tb: TracebackType) -> None:

@@ -4,16 +4,18 @@ from types import TracebackType
 from typing import Any, AnyStr, Awaitable, List, Optional, Tuple
 
 import trio
+from hypercorn.typing import HTTPScope, WebsocketScope
 from quart.app import Quart
 from quart.json import dumps, loads
 from quart.testing.connections import HTTPDisconnect, WebsocketDisconnect, WebsocketResponse
+from quart.typing import TestHTTPConnectionProtocol, TestWebsocketConnectionProtocol
 from quart.utils import decode_headers
 from quart.wrappers import Response
 from werkzeug.datastructures import Headers
 
 
 class TestHTTPConnection:
-    def __init__(self, app: Quart, scope: dict, _preserve_context: bool = False) -> None:
+    def __init__(self, app: Quart, scope: HTTPScope, _preserve_context: bool = False) -> None:
         self.app = app
         self.headers: Optional[Headers] = None
         self.push_promises: List[Tuple[str, Headers]] = []
@@ -37,11 +39,11 @@ class TestHTTPConnection:
         else:
             return data
 
-    async def close(self) -> None:
+    async def disconnect(self) -> None:
         await self._server_send.send({"type": "http.disconnect"})
         await self._server_send.aclose()
 
-    async def __aenter__(self) -> "TestHTTPConnection":
+    async def __aenter__(self) -> TestHTTPConnectionProtocol:
         self._nursery_manager = trio.open_nursery()
         nursery = await self._nursery_manager.__aenter__()
         nursery.start_soon(self.app, self.scope, self._asgi_receive, self._asgi_send)
@@ -49,7 +51,7 @@ class TestHTTPConnection:
 
     async def __aexit__(self, exc_type: type, exc_value: BaseException, tb: TracebackType) -> None:
         if exc_type is not None:
-            await self.close()
+            await self.disconnect()
         await self._nursery_manager.__aexit__(exc_type, exc_value, tb)
         try:
             async with self._client_receive:
@@ -90,7 +92,7 @@ class TestHTTPConnection:
 
 
 class TestWebsocketConnection:
-    def __init__(self, app: Quart, scope: dict) -> None:
+    def __init__(self, app: Quart, scope: WebsocketScope) -> None:
         self.accepted = False
         self.app = app
         self.headers: Optional[Headers] = None
@@ -101,14 +103,14 @@ class TestWebsocketConnection:
         self._client_send, self._client_receive = trio.open_memory_channel(10)
         self._task: Awaitable[None] = None
 
-    async def __aenter__(self) -> "TestWebsocketConnection":
+    async def __aenter__(self) -> TestWebsocketConnectionProtocol:
         self._nursery_manager = trio.open_nursery()
         nursery = await self._nursery_manager.__aenter__()
         nursery.start_soon(self.app, self.scope, self._asgi_receive, self._asgi_send)
         return self
 
     async def __aexit__(self, exc_type: type, exc_value: BaseException, tb: TracebackType) -> None:
-        await self.close()
+        await self.disconnect()
         await self._nursery_manager.__aexit__(exc_type, exc_value, tb)
 
     async def receive(self) -> AnyStr:
@@ -132,7 +134,11 @@ class TestWebsocketConnection:
         raw = dumps(data)
         await self.send(raw)
 
-    async def close(self) -> None:
+    async def close(self, code: int) -> None:
+        await self._server_send.send({"type": "websocket.close", "code": int})
+        await self._server_send.aclose()
+
+    async def disconnect(self) -> None:
         await self._server_send.send({"type": "websocket.disconnect"})
         await self._server_send.aclose()
 

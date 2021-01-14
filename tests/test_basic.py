@@ -65,4 +65,4 @@ async def test_send_file_path(tmpdir: LocalPath) -> None:
     file_.write("something")
     async with app.app_context():
         response = await send_file(Path(file_.realpath()))
-    assert (await response.get_data(raw=True)) == file_.read_binary()
+    assert (await response.get_data(as_text=False)) == file_.read_binary()

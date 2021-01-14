@@ -1,5 +1,5 @@
 import pytest
-from quart.exceptions import RequestEntityTooLarge
+from werkzeug.exceptions import RequestEntityTooLarge
 
 from quart_trio.wrappers.request import TrioBody
 

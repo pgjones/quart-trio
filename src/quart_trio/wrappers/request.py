@@ -1,8 +1,8 @@
 from typing import AnyStr, Optional
 
 import trio
-from quart.exceptions import RequestEntityTooLarge, RequestTimeout
 from quart.wrappers.request import Body, Request
+from werkzeug.exceptions import RequestEntityTooLarge, RequestTimeout
 
 
 class EventWrapper:
@@ -45,11 +45,24 @@ class TrioBody(Body):
 class TrioRequest(Request):
     body_class = TrioBody
 
-    async def get_data(self, raw: bool = True) -> AnyStr:
+    async def get_data(
+        self, cache: bool = True, as_text: bool = False, parse_form_data: bool = False
+    ) -> AnyStr:
+        if parse_form_data:
+            await self._load_form_data()
+
         if self.body_timeout is not None:
             with trio.move_on_after(self.body_timeout) as cancel_scope:
-                return await self.body
+                raw_data = await self.body
+            if cancel_scope.cancelled_caught:
+                raise RequestTimeout()
         else:
-            return await self.body
-        if cancel_scope.cancelled_caught:
-            raise RequestTimeout()
+            raw_data = await self.body
+
+        if not cache:
+            self.body.clear()
+
+        if as_text:
+            return raw_data.decode(self.charset, self.encoding_errors)
+        else:
+            return raw_data

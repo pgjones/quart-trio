@@ -1,5 +1,6 @@
 import pytest
 import trio
+from hypercorn.typing import WebsocketScope
 
 from quart_trio.app import QuartTrio
 from quart_trio.asgi import TrioASGIWebsocketConnection
@@ -7,14 +8,18 @@ from quart_trio.asgi import TrioASGIWebsocketConnection
 
 @pytest.mark.trio
 async def test_websocket_complete_on_disconnect() -> None:
-    scope = {
-        "asgi": {"version": "3"},
-        "headers": [(b"host", b"quart")],
+    scope: WebsocketScope = {
+        "type": "websocket",
+        "asgi": {},
         "http_version": "1.1",
-        "method": "GET",
         "scheme": "wss",
         "path": "ws://quart/path",
+        "raw_path": b"/",
         "query_string": b"",
+        "root_path": "",
+        "headers": [(b"host", b"quart")],
+        "client": ("127.0.0.1", 80),
+        "server": None,
         "subprotocols": [],
         "extensions": {"websocket.http.response": {}},
     }
