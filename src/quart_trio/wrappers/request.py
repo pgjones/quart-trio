@@ -15,6 +15,9 @@ class EventWrapper:
     async def wait(self) -> None:
         await self._event.wait()
 
+    def is_set(self) -> bool:
+        return self._event.set()
+
     def set(self) -> None:
         self._event.set()
 
