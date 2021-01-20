@@ -16,7 +16,7 @@ class EventWrapper:
         await self._event.wait()
 
     def is_set(self) -> bool:
-        return self._event.set()
+        return self._event.is_set()
 
     def set(self) -> None:
         self._event.set()
