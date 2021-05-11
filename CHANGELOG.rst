@@ -1,3 +1,9 @@
+0.8.0 2021-05-11
+----------------
+
+* Bugfix add missing is_set method.
+* Support Quart 0.15 as minimum version.
+
 0.7.0 2020-12-06
 ----------------
 
