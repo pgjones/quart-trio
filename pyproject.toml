@@ -39,7 +39,7 @@ order_by_type = false
 reverse_relative = true
 
 [tool.poetry.dependencies]
-hypercorn = { version = ">=0.6.0", extra = "trio" }
+hypercorn = { version = ">=0.6.0", extras = ["trio"] }
 quart = ">=0.15"
 trio = ">=0.9.0"
 
