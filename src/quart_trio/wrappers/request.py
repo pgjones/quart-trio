@@ -66,3 +66,24 @@ class TrioRequest(Request):
             return raw_data.decode(self.charset, self.encoding_errors)
         else:
             return raw_data
+
+    async def _load_form_data(self) -> None:
+        if self._form is None:
+            parser = self.make_form_data_parser()
+            if self.body_timeout is not None:
+                with trio.move_on_after(self.body_timeout) as cancel_scope:
+                    await parser.parse(
+                        self.body,
+                        self.mimetype,
+                        self.content_length,
+                        self.mimetype_params,
+                    )
+                if cancel_scope.cancelled_caught:
+                    raise RequestTimeout()
+            else:
+                await parser.parse(
+                    self.body,
+                    self.mimetype,
+                    self.content_length,
+                    self.mimetype_params,
+                )
