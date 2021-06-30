@@ -51,13 +51,11 @@ class TrioRequest(Request):
         if parse_form_data:
             await self._load_form_data()
 
-        if self.body_timeout is not None:
-            with trio.move_on_after(self.body_timeout) as cancel_scope:
-                raw_data = await self.body
-            if cancel_scope.cancelled_caught:
-                raise RequestTimeout()
-        else:
+        timeout = float("inf") if self.body_timeout is None else self.body_timeout
+        with trio.move_on_after(timeout) as cancel_scope:
             raw_data = await self.body
+        if cancel_scope.cancelled_caught:
+            raise RequestTimeout()
 
         if not cache:
             self.body.clear()
@@ -70,20 +68,14 @@ class TrioRequest(Request):
     async def _load_form_data(self) -> None:
         if self._form is None:
             parser = self.make_form_data_parser()
-            if self.body_timeout is not None:
-                with trio.move_on_after(self.body_timeout) as cancel_scope:
-                    await parser.parse(
-                        self.body,
-                        self.mimetype,
-                        self.content_length,
-                        self.mimetype_params,
-                    )
-                if cancel_scope.cancelled_caught:
-                    raise RequestTimeout()
-            else:
+
+            timeout = float("inf") if self.body_timeout is None else self.body_timeout
+            with trio.move_on_after(timeout) as cancel_scope:
                 await parser.parse(
                     self.body,
                     self.mimetype,
                     self.content_length,
                     self.mimetype_params,
                 )
+            if cancel_scope.cancelled_caught:
+                raise RequestTimeout()
