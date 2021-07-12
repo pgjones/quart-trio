@@ -71,7 +71,7 @@ class TrioRequest(Request):
 
             timeout = float("inf") if self.body_timeout is None else self.body_timeout
             with trio.move_on_after(timeout) as cancel_scope:
-                await parser.parse(
+                self._form, self._files = await parser.parse(
                     self.body,
                     self.mimetype,
                     self.content_length,
