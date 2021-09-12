@@ -1,3 +1,9 @@
+0.8.1 2021-09-12
+----------------
+
+* Bugfix form data parsing, fixing no running event loop errors.
+* Bugfix save the results of the form parsing.
+
 0.8.0 2021-05-11
 ----------------
 
