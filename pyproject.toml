@@ -68,7 +68,7 @@ trio = ">=0.9.0"
 tox = "*"
 
 [tool.pytest.ini_options]
-addopts = "--no-cov-on-fail --showlocals --strict"
+addopts = "--no-cov-on-fail --showlocals --strict-markers"
 testpaths = ["tests"]
 
 [build-system]
