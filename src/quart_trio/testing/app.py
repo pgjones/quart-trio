@@ -4,7 +4,7 @@ from types import TracebackType
 
 import trio
 from quart.app import Quart
-from quart.testing.app import DEFAULT_TIMEOUT, LifespanFailure
+from quart.testing.app import DEFAULT_TIMEOUT, LifespanError
 from quart.typing import TestClientProtocol
 
 
@@ -59,7 +59,7 @@ class TrioTestApp:
             self._shutdown.set()
         elif message["type"] == "lifespan.startup.failed":
             self._startup.set()
-            raise LifespanFailure(f"Error during startup {message['message']}")
+            raise LifespanError(f"Error during startup {message['message']}")
         elif message["type"] == "lifespan.shutdown.failed":
             self._shutdown.set()
-            raise LifespanFailure(f"Error during shutdown {message['message']}")
+            raise LifespanError(f"Error during shutdown {message['message']}")
