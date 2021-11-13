@@ -5,9 +5,10 @@ import trio
 from hypercorn.config import Config as HyperConfig
 from hypercorn.trio import serve
 from quart import Quart, request_started, websocket_started
-from quart.ctx import RequestContext, WebsocketContext
+from quart.ctx import copy_current_app_context, RequestContext, WebsocketContext
 from quart.logging import create_serving_logger
-from quart.typing import ResponseReturnValue
+from quart.typing import FilePath, ResponseReturnValue
+from quart.utils import file_path_to_path
 from quart.wrappers import Request, Response, Websocket
 from werkzeug.exceptions import HTTPException
 from werkzeug.wrappers import Response as WerkzeugResponse
@@ -196,3 +197,53 @@ class QuartTrio(Quart):
         except (Exception, trio.MultiError) as error:
             result = await self.handle_user_exception(error)
         return await self.finalize_websocket(result, websocket_context)
+
+    async def open_instance_resource(
+        self, path: FilePath, mode: str = "rb"
+    ) -> trio._file_io.AsyncIOWrapper:
+        """Open a file for reading.
+
+        Use as
+
+        .. code-block:: python
+
+            async with await app.open_instance_resource(path) as file_:
+                await file_.read()
+        """
+        return await trio.open_file(self.instance_path / file_path_to_path(path), mode)
+
+    async def open_resource(self, path: FilePath, mode: str = "rb") -> trio._file_io.AsyncIOWrapper:
+        """Open a file for reading.
+
+        Use as
+
+        .. code-block:: python
+
+            async with await app.open_resource(path) as file_:
+                await file_.read()
+        """
+        if mode not in {"r", "rb"}:
+            raise ValueError("Files can only be opened for reading")
+
+        return await trio.open_file(self.root_path / file_path_to_path(path), mode)
+
+    def add_background_task(self, func: Callable, *args: Any, **kwargs: Any) -> None:
+        async def _wrapper() -> None:
+            try:
+                await copy_current_app_context(func)(*args, **kwargs)
+            except (trio.MultiError, Exception) as error:
+                await self.handle_background_exception(error)
+
+        self.nursery.start_soon(_wrapper)
+
+    async def shutdown(self) -> None:
+        async with self.app_context():
+            for func in self.after_serving_funcs:
+                await self.ensure_async(func)()
+            for gen in self.while_serving_gens:
+                try:
+                    await gen.__anext__()
+                except StopAsyncIteration:
+                    pass
+                else:
+                    raise RuntimeError("While serving generator didn't terminate")

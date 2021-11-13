@@ -3,7 +3,7 @@ from typing import NoReturn
 import pytest
 import trio
 from quart import ResponseReturnValue
-from quart.testing import WebsocketResponse
+from quart.testing import WebsocketResponseError
 
 from quart_trio import QuartTrio
 
@@ -44,7 +44,7 @@ async def test_websocket_multi_error_handling(error_app: QuartTrio) -> None:
     try:
         async with test_client.websocket("/ws/") as test_websocket:
             await test_websocket.receive()
-    except WebsocketResponse as error:
+    except WebsocketResponseError as error:
         assert error.response.status_code == 201
 
 
@@ -61,7 +61,7 @@ async def test_websocket_multi_error_unhandled(error_app: QuartTrio) -> None:
     try:
         async with test_client.websocket("/ws/") as test_websocket:
             await test_websocket.receive()
-    except WebsocketResponse as error:
+    except WebsocketResponseError as error:
         assert error.response.status_code == 500
 
 

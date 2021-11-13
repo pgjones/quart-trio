@@ -7,7 +7,11 @@ import trio
 from hypercorn.typing import HTTPScope, WebsocketScope
 from quart.app import Quart
 from quart.json import dumps, loads
-from quart.testing.connections import HTTPDisconnect, WebsocketDisconnect, WebsocketResponse
+from quart.testing.connections import (
+    HTTPDisconnectError,
+    WebsocketDisconnectError,
+    WebsocketResponseError,
+)
 from quart.typing import TestHTTPConnectionProtocol, TestWebsocketConnectionProtocol
 from quart.utils import decode_headers
 from quart.wrappers import Response
@@ -58,7 +62,7 @@ class TestHTTPConnection:
                 async for data in self._client_receive:
                     if isinstance(data, bytes):
                         self.response_data.extend(data)
-                    elif not isinstance(data, HTTPDisconnect):
+                    elif not isinstance(data, HTTPDisconnectError):
                         raise data
         except trio.ClosedResourceError:
             pass
@@ -87,7 +91,7 @@ class TestHTTPConnection:
         elif message["type"] == "http.response.push":
             self.push_promises.append((message["path"], decode_headers(message["headers"])))
         elif message["type"] == "http.disconnect":
-            await self._client_send.send(HTTPDisconnect())
+            await self._client_send.send(HTTPDisconnectError())
             await self._client_send.aclose()
 
 
@@ -157,12 +161,12 @@ class TestWebsocketConnection:
             self.response_data.extend(message["body"])
             if not message.get("more_body", False):
                 await self._client_send.send(
-                    WebsocketResponse(
+                    WebsocketResponseError(
                         self.app.response_class(
                             bytes(self.response_data), self.status_code, self.headers
                         )
                     )
                 )
         elif message["type"] == "websocket.close":
-            await self._client_send.send(WebsocketDisconnect(message.get("code", 1000)))
+            await self._client_send.send(WebsocketDisconnectError(message.get("code", 1000)))
             await self._client_send.aclose()

@@ -61,8 +61,8 @@ ignore_missing_imports = true
 
 [tool.poetry.dependencies]
 python = ">=3.7"
-hypercorn = { version = ">=0.6.0", extras = ["trio"] }
-quart = ">=0.15"
+hypercorn = { version = ">=0.12.0", extras = ["trio"] }
+quart = ">=0.16"
 trio = ">=0.9.0"
 
 [tool.poetry.dev-dependencies]
