@@ -1,3 +1,9 @@
+0.9.0 2021-11-13
+----------------
+
+* Support Python 3.10
+* Update to the Quart 0.16.0 including the latest Quart APIs.
+
 0.8.1 2021-09-12
 ----------------
 
