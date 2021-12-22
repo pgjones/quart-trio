@@ -132,7 +132,13 @@ class QuartTrio(Quart):
                 return await self.full_dispatch_request(request_context)
             except trio.Cancelled:
                 raise  # Cancelled should be handled by serving code.
-            except (Exception, trio.MultiError) as error:
+            except trio.MultiError as error:
+                fitlered_error = trio.MultiError.filter(_keep_cancelled, error)
+                if fitlered_error is not None:
+                    raise fitlered_error
+
+                return await self.handle_exception(error)
+            except Exception as error:
                 return await self.handle_exception(error)
 
     async def full_dispatch_request(
@@ -176,7 +182,13 @@ class QuartTrio(Quart):
                 return await self.full_dispatch_websocket(websocket_context)
             except trio.Cancelled:
                 raise  # Cancelled should be handled by serving code.
-            except (Exception, trio.MultiError) as error:
+            except trio.MultiError as error:
+                fitlered_error = trio.MultiError.filter(_keep_cancelled, error)
+                if fitlered_error is not None:
+                    raise fitlered_error
+
+                return await self.handle_websocket_exception(error)
+            except Exception as error:
                 return await self.handle_websocket_exception(error)
 
     async def full_dispatch_websocket(
@@ -247,3 +259,10 @@ class QuartTrio(Quart):
                     pass
                 else:
                     raise RuntimeError("While serving generator didn't terminate")
+
+
+def _keep_cancelled(exc: Exception) -> Optional[trio.Cancelled]:
+    if isinstance(exc, trio.Cancelled):
+        return exc
+    else:
+        return None
