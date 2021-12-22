@@ -133,9 +133,9 @@ class QuartTrio(Quart):
             except trio.Cancelled:
                 raise  # Cancelled should be handled by serving code.
             except trio.MultiError as error:
-                fitlered_error = trio.MultiError.filter(_keep_cancelled, error)
-                if fitlered_error is not None:
-                    raise fitlered_error
+                filtered_error = trio.MultiError.filter(_keep_cancelled, error)
+                if filtered_error is not None:
+                    raise filtered_error
 
                 return await self.handle_exception(error)
             except Exception as error:
@@ -183,9 +183,9 @@ class QuartTrio(Quart):
             except trio.Cancelled:
                 raise  # Cancelled should be handled by serving code.
             except trio.MultiError as error:
-                fitlered_error = trio.MultiError.filter(_keep_cancelled, error)
-                if fitlered_error is not None:
-                    raise fitlered_error
+                filtered_error = trio.MultiError.filter(_keep_cancelled, error)
+                if filtered_error is not None:
+                    raise filtered_error
 
                 return await self.handle_websocket_exception(error)
             except Exception as error:
