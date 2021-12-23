@@ -67,16 +67,17 @@ class TrioRequest(Request):
             return raw_data
 
     async def _load_form_data(self) -> None:
-        if self._form is None:
-            parser = self.make_form_data_parser()
+        async with self._parsing_lock:
+            if self._form is None:
+                parser = self.make_form_data_parser()
 
-            timeout = float("inf") if self.body_timeout is None else self.body_timeout
-            with trio.move_on_after(timeout) as cancel_scope:
-                self._form, self._files = await parser.parse(
-                    self.body,
-                    self.mimetype,
-                    self.content_length,
-                    self.mimetype_params,
-                )
-            if cancel_scope.cancelled_caught:
-                raise RequestTimeout()
+                timeout = float("inf") if self.body_timeout is None else self.body_timeout
+                with trio.move_on_after(timeout) as cancel_scope:
+                    self._form, self._files = await parser.parse(
+                        self.body,
+                        self.mimetype,
+                        self.content_length,
+                        self.mimetype_params,
+                    )
+                if cancel_scope.cancelled_caught:
+                    raise RequestTimeout()
