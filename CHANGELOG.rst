@@ -1,3 +1,10 @@
+0.9.1 2022-01-02
+----------------
+
+* Bugfix filter out cancelled errors from MultiErrors.
+* Bugfix wrong lock class on TrioRequest.
+* Bugfix use parsing lock when loading form data.
+
 0.9.0 2021-11-13
 ----------------
 
