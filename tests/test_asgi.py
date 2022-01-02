@@ -24,8 +24,10 @@ async def test_websocket_complete_on_disconnect() -> None:
         "extensions": {"websocket.http.response": {}},
     }
     connection = TrioASGIWebsocketConnection(QuartTrio(__name__), scope)
-    send_channel, receive_channel = trio.open_memory_channel(0)
+    send_channel, receive_channel = trio.open_memory_channel[dict](0)
     async with trio.open_nursery() as nursery:
-        nursery.start_soon(connection.handle_messages, nursery, receive_channel.receive)
+        nursery.start_soon(
+            connection.handle_messages, nursery, receive_channel.receive  # type: ignore
+        )
         await send_channel.send({"type": "websocket.disconnect"})
     assert nursery.cancel_scope.cancelled_caught

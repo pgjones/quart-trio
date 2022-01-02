@@ -20,8 +20,8 @@ class TrioTestApp:
         self.shutdown_timeout = shutdown_timeout
         self._startup = trio.Event()
         self._shutdown = trio.Event()
-        self._app_send_channel, self._app_receive_channel = trio.open_memory_channel(10)
-        self._nursery_manager: trio._core._run.NurseryManager
+        self._app_send_channel, self._app_receive_channel = trio.open_memory_channel[dict](10)
+        self._nursery_manager: trio._core._run.NurseryManager  # type: ignore
         self._nursery: trio.Nursery
 
     def test_client(self) -> TestClientProtocol:
@@ -29,7 +29,7 @@ class TrioTestApp:
 
     async def startup(self) -> None:
         scope = {"type": "lifespan", "asgi": {"spec_version": "2.0"}}
-        self._nursery.start_soon(self.app, scope, self._asgi_receive, self._asgi_send)
+        self._nursery.start_soon(self.app, scope, self._asgi_receive, self._asgi_send)  # type: ignore # noqa: E501
         await self._app_send_channel.send({"type": "lifespan.startup"})
         with trio.fail_after(self.startup_timeout):
             await self._startup.wait()

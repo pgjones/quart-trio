@@ -44,7 +44,7 @@ class TrioBody(Body):
 
 class TrioRequest(Request):
     body_class = TrioBody
-    lock_class = trio.Lock
+    lock_class = trio.Lock  # type: ignore
 
     async def get_data(
         self, cache: bool = True, as_text: bool = False, parse_form_data: bool = False

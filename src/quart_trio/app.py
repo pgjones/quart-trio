@@ -20,11 +20,11 @@ from .wrappers import TrioRequest, TrioResponse, TrioWebsocket
 
 
 class QuartTrio(Quart):
-    nursery: trio._core.Nursery
+    nursery: trio.Nursery
     asgi_http_class = TrioASGIHTTPConnection
     asgi_lifespan_class = TrioASGILifespan
     asgi_websocket_class = TrioASGIWebsocketConnection
-    lock_class = trio.Lock
+    lock_class = trio.Lock  # type: ignore
     request_class = TrioRequest
     response_class = TrioResponse
     test_app_class = TrioTestApp
@@ -68,7 +68,9 @@ class QuartTrio(Quart):
         scheme = "https" if certfile is not None and keyfile is not None else "http"
         print(f"Running on {scheme}://{host}:{port} (CTRL + C to quit)")  # noqa: T001, T002
 
-        trio.run(self.run_task, host, port, debug, use_reloader, ca_certs, certfile, keyfile)
+        trio.run(  # type: ignore
+            self.run_task, host, port, debug, use_reloader, ca_certs, certfile, keyfile
+        )
 
     def run_task(
         self,
@@ -137,7 +139,7 @@ class QuartTrio(Quart):
                 if filtered_error is not None:
                     raise filtered_error
 
-                return await self.handle_exception(error)
+                return await self.handle_exception(error)  # type: ignore
             except Exception as error:
                 return await self.handle_exception(error)
 
@@ -166,7 +168,7 @@ class QuartTrio(Quart):
         if isinstance(error, trio.MultiError):
             for exception in error.exceptions:
                 try:
-                    return await self.handle_user_exception(exception)
+                    return await self.handle_user_exception(exception)  # type: ignore
                 except Exception:
                     pass  # No handler for this error
             # Not found a single handler, re-raise the error
@@ -187,7 +189,7 @@ class QuartTrio(Quart):
                 if filtered_error is not None:
                     raise filtered_error
 
-                return await self.handle_websocket_exception(error)
+                return await self.handle_websocket_exception(error)  # type: ignore
             except Exception as error:
                 return await self.handle_websocket_exception(error)
 
@@ -212,7 +214,7 @@ class QuartTrio(Quart):
 
     async def open_instance_resource(
         self, path: FilePath, mode: str = "rb"
-    ) -> trio._file_io.AsyncIOWrapper:
+    ) -> trio._file_io.AsyncIOWrapper:  # type: ignore
         """Open a file for reading.
 
         Use as
@@ -224,7 +226,9 @@ class QuartTrio(Quart):
         """
         return await trio.open_file(self.instance_path / file_path_to_path(path), mode)
 
-    async def open_resource(self, path: FilePath, mode: str = "rb") -> trio._file_io.AsyncIOWrapper:
+    async def open_resource(
+        self, path: FilePath, mode: str = "rb"
+    ) -> trio._file_io.AsyncIOWrapper:  # type: ignore
         """Open a file for reading.
 
         Use as
@@ -244,7 +248,7 @@ class QuartTrio(Quart):
             try:
                 await copy_current_app_context(func)(*args, **kwargs)
             except (trio.MultiError, Exception) as error:
-                await self.handle_background_exception(error)
+                await self.handle_background_exception(error)  # type: ignore
 
         self.nursery.start_soon(_wrapper)
 
@@ -261,7 +265,7 @@ class QuartTrio(Quart):
                     raise RuntimeError("While serving generator didn't terminate")
 
 
-def _keep_cancelled(exc: Exception) -> Optional[trio.Cancelled]:
+def _keep_cancelled(exc: BaseException) -> Optional[trio.Cancelled]:
     if isinstance(exc, trio.Cancelled):
         return exc
     else:

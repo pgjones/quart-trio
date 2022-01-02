@@ -1,5 +1,5 @@
 from functools import partial
-from typing import cast, Optional, TYPE_CHECKING
+from typing import AnyStr, cast, Optional, TYPE_CHECKING
 
 import trio
 from hypercorn.typing import (
@@ -28,13 +28,13 @@ class TrioASGIHTTPConnection(ASGIHTTPConnection):
             nursery.start_soon(self.handle_request, nursery, request, send)
 
     async def handle_messages(  # type: ignore
-        self, nursery: trio._core._run.Nursery, request: Request, receive: ASGIReceiveCallable
+        self, nursery: trio.Nursery, request: Request, receive: ASGIReceiveCallable
     ) -> None:
         await super().handle_messages(request, receive)
         nursery.cancel_scope.cancel()
 
     async def handle_request(  # type: ignore
-        self, nursery: trio._core._run.Nursery, request: Request, send: ASGISendCallable
+        self, nursery: trio.Nursery, request: Request, send: ASGISendCallable
     ) -> None:
         response = await self.app.handle_request(request)
         if isinstance(response, Response) and response.timeout != Ellipsis:
@@ -56,7 +56,7 @@ class TrioASGIWebsocketConnection(ASGIWebsocketConnection):
         self.scope = scope
         self._accepted = False
         self._closed = False
-        self.send_channel, self.receive_channel = trio.open_memory_channel(10)
+        self.send_channel, self.receive_channel = trio.open_memory_channel[AnyStr](10)
 
     async def __call__(self, receive: ASGIReceiveCallable, send: ASGISendCallable) -> None:
         websocket = self._create_websocket_from_scope(send)
@@ -65,7 +65,7 @@ class TrioASGIWebsocketConnection(ASGIWebsocketConnection):
             nursery.start_soon(self.handle_websocket, nursery, websocket, send)
 
     async def handle_messages(  # type: ignore
-        self, nursery: trio._core._run.Nursery, receive: ASGIReceiveCallable
+        self, nursery: trio.Nursery, receive: ASGIReceiveCallable
     ) -> None:
         while True:
             event = await receive()
@@ -97,7 +97,7 @@ class TrioASGIWebsocketConnection(ASGIWebsocketConnection):
         )
 
     async def handle_websocket(  # type: ignore
-        self, nursery: trio._core._run.Nursery, websocket: Websocket, send: ASGISendCallable
+        self, nursery: trio.Nursery, websocket: Websocket, send: ASGISendCallable
     ) -> None:
         await super().handle_websocket(websocket, send)
         nursery.cancel_scope.cancel()
