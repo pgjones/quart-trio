@@ -61,6 +61,7 @@ module =["trio.*"]
 ignore_missing_imports = true
 
 [tool.poetry.dependencies]
+pydata_sphinx_theme = { version = "*", optional = true }
 python = ">=3.7"
 hypercorn = { version = ">=0.12.0", extras = ["trio"] }
 quart = ">=0.16"
@@ -68,6 +69,9 @@ trio = ">=0.9.0"
 
 [tool.poetry.dev-dependencies]
 tox = "*"
+
+[tool.poetry.extras]
+docs = ["pydata_sphinx_theme"]
 
 [tool.pytest.ini_options]
 addopts = "--no-cov-on-fail --showlocals --strict-markers"
