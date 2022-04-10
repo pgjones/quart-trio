@@ -21,7 +21,7 @@ classifiers = [
 include = ["src/quart_trio/py.typed"]
 license = "MIT"
 readme = "README.rst"
-repository = "https://gitlab.com/pgjones/quart-trio/"
+repository = "https://github.com/pgjones/quart-trio/"
 
 [tool.black]
 line-length = 100

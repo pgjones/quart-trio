@@ -8,11 +8,11 @@ Quart-Trio is an extension for `Quart
 using the asyncio event loop present in the Python standard library
 and supported by default in Quart.
 
-Quart-Trio is developed on `GitLab
-<https://gitlab.com/pgjones/quart-trio>`_. You are very welcome to
-open `issues <https://gitlab.com/pgjones/quart-trio/issues>`_ or
+Quart-Trio is developed on `GitHub
+<https://github.com/pgjones/quart-trio>`_. You are very welcome to
+open `issues <https://github.com/pgjones/quart-trio/issues>`_ or
 propose `merge requests
-<https://gitlab.com/pgjones/quart-trio/merge_requests>`_.
+<https://github.com/pgjones/quart-trio/merge_requests>`_.
 
 .. note::
 
