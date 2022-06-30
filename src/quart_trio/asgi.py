@@ -13,6 +13,7 @@ from hypercorn.typing import (
     WebsocketScope,
 )
 from quart.asgi import ASGIHTTPConnection, ASGIWebsocketConnection
+from quart.signals import websocket_received
 from quart.wrappers import Request, Response, Websocket  # noqa: F401
 from werkzeug.datastructures import Headers
 
@@ -70,7 +71,9 @@ class TrioASGIWebsocketConnection(ASGIWebsocketConnection):
         while True:
             event = await receive()
             if event["type"] == "websocket.receive":
-                await self.send_channel.send(event.get("bytes") or event["text"])
+                message = event.get("bytes") or event["text"]
+                await websocket_received.send(message)
+                await self.send_channel.send(message)
             elif event["type"] == "websocket.disconnect":
                 break
         nursery.cancel_scope.cancel()
