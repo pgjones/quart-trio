@@ -6,7 +6,6 @@ from hypercorn.config import Config as HyperConfig
 from hypercorn.trio import serve
 from quart import Quart, request_started, websocket_started
 from quart.ctx import copy_current_app_context, RequestContext, WebsocketContext
-from quart.logging import create_serving_logger
 from quart.typing import FilePath, ResponseReturnValue
 from quart.utils import file_path_to_path
 from quart.wrappers import Request, Response, Websocket
@@ -66,7 +65,7 @@ class QuartTrio(Quart):
             )
 
         scheme = "https" if certfile is not None and keyfile is not None else "http"
-        print(f"Running on {scheme}://{host}:{port} (CTRL + C to quit)")  # noqa: T001, T002
+        print(f"Running on {scheme}://{host}:{port} (CTRL + C to quit)")  # noqa: T201
 
         trio.run(  # type: ignore
             self.run_task, host, port, debug, use_reloader, ca_certs, certfile, keyfile
@@ -104,7 +103,7 @@ class QuartTrio(Quart):
         """
         config = HyperConfig()
         config.access_log_format = "%(h)s %(r)s %(s)s %(b)s %(D)s"
-        config.accesslog = create_serving_logger()
+        config.accesslog = "-"
         config.bind = [f"{host}:{port}"]
         config.ca_certs = ca_certs
         config.certfile = certfile
