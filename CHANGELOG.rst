@@ -1,3 +1,9 @@
+0.10.0 2022-08-14
+-----------------
+
+* Bugfix missing websocket_received event.
+* Support Quart 0.18.0 or greater.
+
 0.9.1 2022-01-02
 ----------------
 
