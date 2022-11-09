@@ -1,7 +1,7 @@
 from typing import NoReturn
 
 import pytest
-import trio
+from exceptiongroup import BaseExceptionGroup
 from quart import ResponseReturnValue
 from quart.testing import WebsocketResponseError
 
@@ -14,17 +14,21 @@ def _error_app() -> QuartTrio:
 
     @app.route("/")
     async def index() -> NoReturn:
-        raise trio.MultiError([ValueError(), trio.MultiError([TypeError(), ValueError()])])
+        raise BaseExceptionGroup(
+            "msg1", [ValueError(), BaseExceptionGroup("msg2", [TypeError(), ValueError()])]
+        )
 
     @app.websocket("/ws/")
     async def ws() -> NoReturn:
-        raise trio.MultiError([ValueError(), trio.MultiError([TypeError(), ValueError()])])
+        raise BaseExceptionGroup(
+            "msg3", [ValueError(), BaseExceptionGroup("msg4", [TypeError(), ValueError()])]
+        )
 
     return app
 
 
 @pytest.mark.trio
-async def test_multi_error_handling(error_app: QuartTrio) -> None:
+async def test_exception_group_handling(error_app: QuartTrio) -> None:
     @error_app.errorhandler(TypeError)
     async def handler(_: Exception) -> ResponseReturnValue:
         return "", 201
@@ -35,7 +39,7 @@ async def test_multi_error_handling(error_app: QuartTrio) -> None:
 
 
 @pytest.mark.trio
-async def test_websocket_multi_error_handling(error_app: QuartTrio) -> None:
+async def test_websocket_exception_group_handling(error_app: QuartTrio) -> None:
     @error_app.errorhandler(TypeError)
     async def handler(_: Exception) -> ResponseReturnValue:
         return "", 201
@@ -49,14 +53,14 @@ async def test_websocket_multi_error_handling(error_app: QuartTrio) -> None:
 
 
 @pytest.mark.trio
-async def test_multi_error_unhandled(error_app: QuartTrio) -> None:
+async def test_exception_group_unhandled(error_app: QuartTrio) -> None:
     test_client = error_app.test_client()
     response = await test_client.get("/")
     assert response.status_code == 500
 
 
 @pytest.mark.trio
-async def test_websocket_multi_error_unhandled(error_app: QuartTrio) -> None:
+async def test_websocket_exception_group_unhandled(error_app: QuartTrio) -> None:
     test_client = error_app.test_client()
     try:
         async with test_client.websocket("/ws/") as test_websocket:
