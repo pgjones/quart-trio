@@ -2,6 +2,7 @@ import warnings
 from typing import Any, Awaitable, Callable, Coroutine, Optional, Union
 
 import trio
+from exceptiongroup import BaseExceptionGroup
 from hypercorn.config import Config as HyperConfig
 from hypercorn.trio import serve
 from quart import Quart, request_started, websocket_started
@@ -133,8 +134,8 @@ class QuartTrio(Quart):
                 return await self.full_dispatch_request(request_context)
             except trio.Cancelled:
                 raise  # Cancelled should be handled by serving code.
-            except trio.MultiError as error:
-                filtered_error = trio.MultiError.filter(_keep_cancelled, error)
+            except BaseExceptionGroup as error:
+                filtered_error, _ = error.split(trio.Cancelled)
                 if filtered_error is not None:
                     raise filtered_error
 
@@ -157,14 +158,14 @@ class QuartTrio(Quart):
             result = await self.preprocess_request(request_context)
             if result is None:
                 result = await self.dispatch_request(request_context)
-        except (Exception, trio.MultiError) as error:
+        except (Exception, BaseExceptionGroup) as error:
             result = await self.handle_user_exception(error)
         return await self.finalize_request(result, request_context)
 
     async def handle_user_exception(
-        self, error: Union[Exception, trio.MultiError]
+        self, error: Union[Exception, BaseExceptionGroup]
     ) -> Union[HTTPException, ResponseReturnValue]:
-        if isinstance(error, trio.MultiError):
+        if isinstance(error, BaseExceptionGroup):
             for exception in error.exceptions:
                 try:
                     return await self.handle_user_exception(exception)  # type: ignore
@@ -183,8 +184,8 @@ class QuartTrio(Quart):
                 return await self.full_dispatch_websocket(websocket_context)
             except trio.Cancelled:
                 raise  # Cancelled should be handled by serving code.
-            except trio.MultiError as error:
-                filtered_error = trio.MultiError.filter(_keep_cancelled, error)
+            except BaseExceptionGroup as error:
+                filtered_error, _ = error.split(trio.Cancelled)
                 if filtered_error is not None:
                     raise filtered_error
 
@@ -207,7 +208,7 @@ class QuartTrio(Quart):
             result = await self.preprocess_websocket(websocket_context)
             if result is None:
                 result = await self.dispatch_websocket(websocket_context)
-        except (Exception, trio.MultiError) as error:
+        except (Exception, BaseExceptionGroup) as error:
             result = await self.handle_user_exception(error)
         return await self.finalize_websocket(result, websocket_context)
 
@@ -246,7 +247,7 @@ class QuartTrio(Quart):
         async def _wrapper() -> None:
             try:
                 await copy_current_app_context(func)(*args, **kwargs)
-            except (trio.MultiError, Exception) as error:
+            except (BaseExceptionGroup, Exception) as error:
                 await self.handle_background_exception(error)  # type: ignore
 
         self.nursery.start_soon(_wrapper)
@@ -262,10 +263,3 @@ class QuartTrio(Quart):
                     pass
                 else:
                     raise RuntimeError("While serving generator didn't terminate")
-
-
-def _keep_cancelled(exc: BaseException) -> Optional[trio.Cancelled]:
-    if isinstance(exc, trio.Cancelled):
-        return exc
-    else:
-        return None

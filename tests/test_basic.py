@@ -1,7 +1,7 @@
 from pathlib import Path
 
+import py
 import pytest
-from py._path.local import LocalPath
 from quart import abort, Quart, ResponseReturnValue, send_file, websocket
 from quart.testing import WebsocketResponseError
 
@@ -59,7 +59,7 @@ async def test_websocket_abort(app: Quart) -> None:
 
 
 @pytest.mark.trio
-async def test_send_file_path(tmpdir: LocalPath) -> None:
+async def test_send_file_path(tmpdir: py.path.local) -> None:
     app = QuartTrio(__name__)
     file_ = tmpdir.join("send.img")
     file_.write("something")

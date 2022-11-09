@@ -2,6 +2,7 @@ from functools import partial
 from typing import AnyStr, cast, Optional, TYPE_CHECKING
 
 import trio
+from exceptiongroup import BaseExceptionGroup
 from hypercorn.typing import (
     ASGIReceiveCallable,
     ASGISendCallable,
@@ -118,7 +119,7 @@ class TrioASGILifespan:
                 if event["type"] == "lifespan.startup":
                     try:
                         await self.app.startup()
-                    except (Exception, trio.MultiError) as error:
+                    except (Exception, BaseExceptionGroup) as error:
                         await send(
                             cast(
                                 LifespanStartupFailedEvent,
@@ -134,7 +135,7 @@ class TrioASGILifespan:
                 elif event["type"] == "lifespan.shutdown":
                     try:
                         await self.app.shutdown()
-                    except (Exception, trio.MultiError) as error:
+                    except (Exception, BaseExceptionGroup) as error:
                         await send(
                             cast(
                                 LifespanShutdownFailedEvent,
