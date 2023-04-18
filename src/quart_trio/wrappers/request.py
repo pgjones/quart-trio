@@ -4,6 +4,8 @@ import trio
 from quart.wrappers.request import Body, Request
 from werkzeug.exceptions import RequestEntityTooLarge, RequestTimeout
 
+from ..formparser import TrioFormDataParser
+
 
 class EventWrapper:
     def __init__(self) -> None:
@@ -44,6 +46,7 @@ class TrioBody(Body):
 
 class TrioRequest(Request):
     body_class = TrioBody
+    form_data_parser_class = TrioFormDataParser
     lock_class = trio.Lock  # type: ignore
 
     async def get_data(
