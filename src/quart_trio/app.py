@@ -168,7 +168,7 @@ class QuartTrio(Quart):
         if isinstance(error, BaseExceptionGroup):
             for exception in error.exceptions:
                 try:
-                    return await self.handle_user_exception(exception)  # type: ignore
+                    return await self.handle_user_exception(exception)
                 except Exception:
                     pass  # No handler for this error
             # Not found a single handler, re-raise the error
