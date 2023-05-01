@@ -1,6 +1,6 @@
 from pathlib import Path
 
-import py
+import py  # type: ignore[import]  # Stubs do not currently exist
 import pytest
 from quart import abort, Quart, ResponseReturnValue, send_file, websocket
 from quart.testing import WebsocketResponseError

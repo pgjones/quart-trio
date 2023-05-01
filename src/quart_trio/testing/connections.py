@@ -106,9 +106,9 @@ class TestWebsocketConnection:
         self.scope = scope
         self.status_code: Optional[int] = None
         self._server_send, self._server_receive = trio.open_memory_channel[dict](10)
-        self._client_send, self._client_receive = trio.open_memory_channel[
-            Union[AnyStr, Exception]
-        ](10)
+        self._client_send: trio.MemorySendChannel
+        self._client_receive: trio.MemoryReceiveChannel
+        self._client_send, self._client_receive = trio.open_memory_channel(10)
         self._task: Awaitable[None] = None
 
     async def __aenter__(self) -> TestWebsocketConnectionProtocol:

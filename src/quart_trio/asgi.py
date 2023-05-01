@@ -1,5 +1,5 @@
 from functools import partial
-from typing import AnyStr, cast, Optional, TYPE_CHECKING
+from typing import cast, Optional, TYPE_CHECKING
 
 import trio
 from exceptiongroup import BaseExceptionGroup
@@ -58,7 +58,9 @@ class TrioASGIWebsocketConnection(ASGIWebsocketConnection):
         self.scope = scope
         self._accepted = False
         self._closed = False
-        self.send_channel, self.receive_channel = trio.open_memory_channel[AnyStr](10)
+        self.send_channel: trio.MemorySendChannel
+        self.receive_channel: trio.MemoryReceiveChannel
+        self.send_channel, self.receive_channel = trio.open_memory_channel(10)
 
     async def __call__(self, receive: ASGIReceiveCallable, send: ASGISendCallable) -> None:
         websocket = self._create_websocket_from_scope(send)

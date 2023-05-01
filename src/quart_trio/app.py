@@ -72,7 +72,7 @@ class QuartTrio(Quart):
             self.run_task, host, port, debug, use_reloader, ca_certs, certfile, keyfile
         )
 
-    def run_task(
+    def run_task(  # type: ignore[override]  # Has extra `use_reloader` param
         self,
         host: str = "127.0.0.1",
         port: int = 5000,
