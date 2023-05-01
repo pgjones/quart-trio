@@ -107,7 +107,7 @@ class TestWebsocketConnection:
         self.status_code: Optional[int] = None
         self._server_send, self._server_receive = trio.open_memory_channel[dict](10)
         self._client_send, self._client_receive = trio.open_memory_channel[
-            Union[AnyStr, Exception]
+            Union[bytes, str, Exception]
         ](10)
         self._task: Awaitable[None] = None
 
@@ -126,7 +126,7 @@ class TestWebsocketConnection:
         if isinstance(data, Exception):
             raise data
         else:
-            return data
+            return data  # type: ignore
 
     async def send(self, data: AnyStr) -> None:
         if isinstance(data, str):

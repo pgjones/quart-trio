@@ -1,6 +1,5 @@
 from pathlib import Path
 
-import py
 import pytest
 from quart import abort, Quart, ResponseReturnValue, send_file, websocket
 from quart.testing import WebsocketResponseError
@@ -59,10 +58,10 @@ async def test_websocket_abort(app: Quart) -> None:
 
 
 @pytest.mark.trio
-async def test_send_file_path(tmpdir: py.path.local) -> None:
+async def test_send_file_path(tmp_path: Path) -> None:
     app = QuartTrio(__name__)
-    file_ = tmpdir.join("send.img")
-    file_.write("something")
+    file_ = tmp_path / "send.img"
+    file_.write_text("something")
     async with app.app_context():
-        response = await send_file(Path(file_.realpath()))
-    assert (await response.get_data(as_text=False)) == file_.read_binary()
+        response = await send_file(file_)
+    assert (await response.get_data(as_text=False)) == file_.read_bytes()

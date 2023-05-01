@@ -77,7 +77,6 @@ class QuartTrio(Quart):
         host: str = "127.0.0.1",
         port: int = 5000,
         debug: Optional[bool] = None,
-        use_reloader: bool = True,
         ca_certs: Optional[str] = None,
         certfile: Optional[str] = None,
         keyfile: Optional[str] = None,
@@ -112,9 +111,8 @@ class QuartTrio(Quart):
             config.debug = debug
         config.errorlog = config.accesslog
         config.keyfile = keyfile
-        config.use_reloader = use_reloader
 
-        return serve(self, config)
+        return serve(self, config, shutdown_trigger=shutdown_trigger)
 
     def sync_to_async(self, func: Callable[..., Any]) -> Callable[..., Awaitable[Any]]:
         """Return a async function that will run the synchronous function *func*.
@@ -168,7 +166,7 @@ class QuartTrio(Quart):
         if isinstance(error, BaseExceptionGroup):
             for exception in error.exceptions:
                 try:
-                    return await self.handle_user_exception(exception)  # type: ignore
+                    return await self.handle_user_exception(exception)
                 except Exception:
                     pass  # No handler for this error
             # Not found a single handler, re-raise the error
