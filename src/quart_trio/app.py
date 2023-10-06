@@ -150,8 +150,7 @@ class QuartTrio(Quart):
             request_context: The request context, optional as Flask
                 omits this argument.
         """
-        await self.try_trigger_before_first_request_functions()
-        await request_started.send(self)
+        await request_started.send_async(self)
         try:
             result = await self.preprocess_request(request_context)
             if result is None:
@@ -200,8 +199,7 @@ class QuartTrio(Quart):
             websocket_context: The websocket context, optional to match
                 the Flask convention.
         """
-        await self.try_trigger_before_first_request_functions()
-        await websocket_started.send(self)
+        await websocket_started.send_async(self)
         try:
             result = await self.preprocess_websocket(websocket_context)
             if result is None:
