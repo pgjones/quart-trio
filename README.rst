@@ -19,9 +19,9 @@ QuartTrio can be installed via `pip
 
     $ pip install quart-trio
 
-and requires Python 3.7.0 or higher (see `python version support
-<https://pgjones.gitlab.io/quart/discussion/python_versions.html>`_ for
-reasoning).
+and requires Python 3.8 or higher (see `python version support
+<https://pgjones.gitlab.io/quart/discussion/python_versions.html>`_
+for reasoning).
 
 A minimal Quart example is,
 
