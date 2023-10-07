@@ -1,3 +1,11 @@
+0.11.0 2023-10-07
+-----------------
+
+* Turn all MultiError occurrences into BaseExceptionGroup.
+* Bugfix form response file saving.
+* Support Quart 0.19 or greater.
+* Officially support Python 3.12 drop Python 3.7.
+
 0.10.0 2022-08-14
 -----------------
 
