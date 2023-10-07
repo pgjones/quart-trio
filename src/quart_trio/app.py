@@ -1,12 +1,14 @@
+import sys
 import warnings
-from typing import Any, Awaitable, Callable, Coroutine, Optional, Union
+from typing import Any, Awaitable, Callable, Coroutine, Optional, TypeVar, Union
 
 import trio
 from exceptiongroup import BaseExceptionGroup
 from hypercorn.config import Config as HyperConfig
 from hypercorn.trio import serve
 from quart import Quart, request_started, websocket_started
-from quart.ctx import copy_current_app_context, RequestContext, WebsocketContext
+from quart.ctx import RequestContext, WebsocketContext
+from quart.signals import got_serving_exception
 from quart.typing import FilePath, ResponseReturnValue
 from quart.utils import file_path_to_path
 from quart.wrappers import Request, Response, Websocket
@@ -18,6 +20,14 @@ from .testing import TrioClient, TrioTestApp
 from .utils import run_sync
 from .wrappers import TrioRequest, TrioResponse, TrioWebsocket
 
+try:
+    from typing import ParamSpec
+except ImportError:
+    from typing_extensions import ParamSpec  # type: ignore
+
+T = TypeVar("T")
+P = ParamSpec("P")
+
 
 class QuartTrio(Quart):
     nursery: trio.Nursery
@@ -28,7 +38,7 @@ class QuartTrio(Quart):
     request_class = TrioRequest
     response_class = TrioResponse
     test_app_class = TrioTestApp
-    test_client_class = TrioClient
+    test_client_class = TrioClient  # type: ignore
     websocket_class = TrioWebsocket
 
     def run(  # type: ignore
@@ -114,7 +124,7 @@ class QuartTrio(Quart):
 
         return serve(self, config, shutdown_trigger=shutdown_trigger)
 
-    def sync_to_async(self, func: Callable[..., Any]) -> Callable[..., Awaitable[Any]]:
+    def sync_to_async(self, func: Callable[P, T]) -> Callable[P, Awaitable[T]]:
         """Return a async function that will run the synchronous function *func*.
 
         This can be used as so,::
@@ -140,6 +150,9 @@ class QuartTrio(Quart):
                 return await self.handle_exception(error)  # type: ignore
             except Exception as error:
                 return await self.handle_exception(error)
+            finally:
+                if request.scope.get("_quart._preserve_context", False):
+                    self._preserved_context = request_context.copy()
 
     async def full_dispatch_request(
         self, request_context: Optional[RequestContext] = None
@@ -150,9 +163,10 @@ class QuartTrio(Quart):
             request_context: The request context, optional as Flask
                 omits this argument.
         """
-        await self.try_trigger_before_first_request_functions()
-        await request_started.send(self)
         try:
+            await request_started.send_async(self, _sync_wrapper=self.ensure_async)
+
+            result: ResponseReturnValue | HTTPException | None
             result = await self.preprocess_request(request_context)
             if result is None:
                 result = await self.dispatch_request(request_context)
@@ -190,6 +204,9 @@ class QuartTrio(Quart):
                 return await self.handle_websocket_exception(error)  # type: ignore
             except Exception as error:
                 return await self.handle_websocket_exception(error)
+            finally:
+                if websocket.scope.get("_quart._preserve_context", False):
+                    self._preserved_context = websocket_context.copy()
 
     async def full_dispatch_websocket(
         self, websocket_context: Optional[WebsocketContext] = None
@@ -200,9 +217,10 @@ class QuartTrio(Quart):
             websocket_context: The websocket context, optional to match
                 the Flask convention.
         """
-        await self.try_trigger_before_first_request_functions()
-        await websocket_started.send(self)
         try:
+            await websocket_started.send_async(self, _sync_wrapper=self.ensure_async)
+
+            result: ResponseReturnValue | HTTPException | None
             result = await self.preprocess_websocket(websocket_context)
             if result is None:
                 result = await self.dispatch_websocket(websocket_context)
@@ -244,20 +262,35 @@ class QuartTrio(Quart):
     def add_background_task(self, func: Callable, *args: Any, **kwargs: Any) -> None:
         async def _wrapper() -> None:
             try:
-                await copy_current_app_context(func)(*args, **kwargs)
+                async with self.app_context():
+                    await self.ensure_async(func)(*args, **kwargs)
             except (BaseExceptionGroup, Exception) as error:
                 await self.handle_background_exception(error)  # type: ignore
 
         self.nursery.start_soon(_wrapper)
 
     async def shutdown(self) -> None:
-        async with self.app_context():
-            for func in self.after_serving_funcs:
-                await self.ensure_async(func)()
-            for gen in self.while_serving_gens:
-                try:
-                    await gen.__anext__()
-                except StopAsyncIteration:
-                    pass
-                else:
-                    raise RuntimeError("While serving generator didn't terminate")
+        if self.config["BACKGROUND_TASK_SHUTDOWN_TIMEOUT"] is not None:
+            self.nursery.cancel_scope.deadline = (
+                trio.current_time() + self.config["BACKGROUND_TASK_SHUTDOWN_TIMEOUT"]
+            )
+        else:
+            self.nursery.cancel_scope.cancel()
+
+        try:
+            async with self.app_context():
+                for func in self.after_serving_funcs:
+                    await self.ensure_async(func)()
+                for gen in self.while_serving_gens:
+                    try:
+                        await gen.__anext__()
+                    except StopAsyncIteration:
+                        pass
+                    else:
+                        raise RuntimeError("While serving generator didn't terminate")
+        except Exception as error:
+            await got_serving_exception.send_async(
+                self, _sync_wrapper=self.ensure_async, exception=error
+            )
+            self.log_exception(sys.exc_info())
+            raise

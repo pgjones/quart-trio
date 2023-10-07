@@ -65,7 +65,7 @@ class TrioRequest(Request):
             self.body.clear()
 
         if as_text:
-            return raw_data.decode(self.charset, self.encoding_errors)
+            return raw_data.decode()
         else:
             return raw_data
 

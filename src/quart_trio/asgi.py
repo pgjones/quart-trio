@@ -1,5 +1,6 @@
 from functools import partial
 from typing import cast, Optional, TYPE_CHECKING, Union
+from urllib.parse import urlparse
 
 import trio
 from exceptiongroup import BaseExceptionGroup
@@ -73,7 +74,7 @@ class TrioASGIWebsocketConnection(ASGIWebsocketConnection):
             event = await receive()
             if event["type"] == "websocket.receive":
                 message = event.get("bytes") or event["text"]
-                await websocket_received.send(message)
+                await websocket_received.send_async(message, _sync_wrapper=self.app.ensure_async)
                 await self.send_channel.send(message)
             elif event["type"] == "websocket.disconnect":
                 break
@@ -83,10 +84,20 @@ class TrioASGIWebsocketConnection(ASGIWebsocketConnection):
         headers = Headers()
         headers["Remote-Addr"] = (self.scope.get("client") or ["<local>"])[0]
         for name, value in self.scope["headers"]:
-            headers.add(name.decode().title(), value.decode())
+            headers.add(name.decode("latin1").title(), value.decode("latin1"))
+
+        path = self.scope["path"]
+        path = path if path[0] == "/" else urlparse(path).path
+        root_path = self.scope.get("root_path", "")
+        if root_path != "":
+            try:
+                path = path.split(root_path, 1)[1]
+                path = " " if path == "" else path
+            except IndexError:
+                path = " "  # Invalid in paths, hence will result in 404
 
         return self.app.websocket_class(
-            self.scope["path"],
+            path,
             self.scope["query_string"],
             self.scope["scheme"],
             headers,
@@ -97,7 +108,7 @@ class TrioASGIWebsocketConnection(ASGIWebsocketConnection):
             partial(self.send_data, send),
             partial(self.accept_connection, send),
             partial(self.close_connection, send),
-            self.scope,
+            scope=self.scope,
         )
 
     async def handle_websocket(  # type: ignore
@@ -124,7 +135,7 @@ class TrioASGILifespan:
                             cast(
                                 LifespanStartupFailedEvent,
                                 {"type": "lifespan.startup.failed", "message": str(error)},
-                            )
+                            ),
                         )
                     else:
                         await send(
@@ -140,13 +151,13 @@ class TrioASGILifespan:
                             cast(
                                 LifespanShutdownFailedEvent,
                                 {"type": "lifespan.shutdown.failed", "message": str(error)},
-                            )
+                            ),
                         )
                     else:
                         await send(
                             cast(
                                 LifespanShutdownCompleteEvent,
                                 {"type": "lifespan.shutdown.complete"},
-                            )
+                            ),
                         )
                     break
