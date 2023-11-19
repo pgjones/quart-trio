@@ -79,9 +79,7 @@ class QuartTrio(Quart):
         scheme = "https" if certfile is not None and keyfile is not None else "http"
         print(f"Running on {scheme}://{host}:{port} (CTRL + C to quit)")  # noqa: T201
 
-        trio.run(  # type: ignore
-            self.run_task, host, port, debug, ca_certs, certfile, keyfile
-        )
+        trio.run(self.run_task, host, port, debug, ca_certs, certfile, keyfile)  # type: ignore
 
     def run_task(
         self,
