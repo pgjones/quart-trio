@@ -34,6 +34,7 @@ class QuartTrio(Quart):
     asgi_http_class = TrioASGIHTTPConnection
     asgi_lifespan_class = TrioASGILifespan
     asgi_websocket_class = TrioASGIWebsocketConnection
+    event_class = trio.Event  # type: ignore
     lock_class = trio.Lock  # type: ignore
     request_class = TrioRequest
     response_class = TrioResponse
