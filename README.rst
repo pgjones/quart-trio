@@ -4,7 +4,7 @@ Quart-Trio
 |Build Status| |docs| |pypi| |python| |license|
 
 Quart-Trio is an extension for `Quart
-<https://gitlab.com/pgjones/quart>`__ to support the `Trio
+<https://github.com/pallets/quart>`__ to support the `Trio
 <https://trio.readthedocs.io/en/latest/>`_ event loop. This is an
 alternative to using the asyncio event loop present in the Python
 standard library and supported by default in Quart.
@@ -20,7 +20,7 @@ QuartTrio can be installed via `pip
     $ pip install quart-trio
 
 and requires Python 3.8 or higher (see `python version support
-<https://pgjones.gitlab.io/quart/discussion/python_versions.html>`_
+<https://quart.palletsprojects.com/en/latest/discussion/python_versions.html>`_
 for reasoning).
 
 A minimal Quart example is,
@@ -50,7 +50,7 @@ if the above is in a file called ``app.py`` it can be run as,
     $ python app.py
 
 To deploy in a production setting see the `deployment
-<https://pgjones.github.io/quart-trio/tutorials/deployment.html>`_
+<https://quart-trio.readthedocs.io/en/latest/tutorials/deployment.html>`_
 documentation.
 
 Contributing
@@ -77,8 +77,8 @@ this will check the code style and run the tests.
 Help
 ----
 
-The `Quart-Trio <https://pgjones.github.io/quart-trio/>`__ and `Quart
-<https://pgjones.github.io/quart/>`__ documentation are the best
+The `Quart-Trio <https://quart-trio.readthedocs.io>`__ and `Quart
+<https://quart.palletsprojects.com>`__ documentation are the best
 places to start, after that try searching `stack overflow
 <https://stackoverflow.com/questions/tagged/quart>`_, if you still
 can't find an answer please `open an issue

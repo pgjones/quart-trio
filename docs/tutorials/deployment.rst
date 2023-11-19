@@ -5,7 +5,7 @@ Deploying Quart-Trio
 
 It is not recommended to run Quart-Trio apps directly (via
 :meth:`~quart_trio.app.QuartTrio.run`) in production. Instead it is
-recommended that `Hypercorn <https://gitlab.com/pgjones/hypercorn>`_
+recommended that `Hypercorn <https://github.com/pgjones/hypercorn>`_
 is used. This is becuase the :meth:`~quart_trio.app.QuartTrio.run`
 enables features that help development yet slow production
 performance. Hypercorn is installed with QuartTrio and will be used to
@@ -35,4 +35,4 @@ you can run with Hypercorn using,
 
     hypercorn -k trio example:app
 
-See the `Hypercorn docs <https://pgjones.gitlab.io/hypercorn/>`_.
+See the `Hypercorn docs <https://hypercorn.readthedocs.io/>`_.

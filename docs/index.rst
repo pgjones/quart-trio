@@ -3,7 +3,7 @@
 .. title:: Quart-Trio documentation
 
 Quart-Trio is an extension for `Quart
-<https://gitlab.com/pgjones/quart>`_ to support the `Trio
+<https://github.com/pallets/quart>`_ to support the `Trio
 <https://trio.readthedocs.io/>`_ event loop. This is an alternative to
 using the asyncio event loop present in the Python standard library
 and supported by default in Quart.
@@ -18,7 +18,8 @@ propose `merge requests
 
    Quart-Trio is a Quart extension, therefore this documentation only
    mentions differences to Quart. Please consider the `Quart docs
-   <https://pgjones.gitlab.io/quart/>`_ for general usage information.
+   <https://quart.palletsprojects.com>`_ for general usage
+   information.
 
 
 Contents

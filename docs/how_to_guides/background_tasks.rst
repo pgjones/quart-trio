@@ -4,7 +4,7 @@ Background Tasks
 ================
 
 Background tasks work with the same API as for `Quart
-<https://pgjones.gitlab.io/quart/how_to_guides/background_tasks.html>`_
+<https://quart.palletsprojects.com/en/latest/how_to_guides/background_tasks.html>`_
 with the tasks themselves running on a nursery stored on the app,
 ``app.nursery``.
 
