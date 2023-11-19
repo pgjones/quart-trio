@@ -30,4 +30,5 @@ async def test_websocket_complete_on_disconnect() -> None:
             connection.handle_messages, nursery, receive_channel.receive  # type: ignore
         )
         await send_channel.send({"type": "websocket.disconnect"})
+        await trio.sleep(1)  # Simulate doing something else
     assert nursery.cancel_scope.cancelled_caught
