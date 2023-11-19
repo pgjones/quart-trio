@@ -80,7 +80,7 @@ class QuartTrio(Quart):
         print(f"Running on {scheme}://{host}:{port} (CTRL + C to quit)")  # noqa: T201
 
         trio.run(  # type: ignore
-            self.run_task, host, port, debug, use_reloader, ca_certs, certfile, keyfile
+            self.run_task, host, port, debug, ca_certs, certfile, keyfile
         )
 
     def run_task(
