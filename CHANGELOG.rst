@@ -1,3 +1,9 @@
+0.11.1 2023-11-19
+-----------------
+
+* Support Quart 0.19.4 and the event_class.
+* Bugfix the run_task usage.
+
 0.11.0 2023-10-07
 -----------------
 
