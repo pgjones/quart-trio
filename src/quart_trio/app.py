@@ -51,6 +51,8 @@ class QuartTrio(Quart):
         ca_certs: Optional[str] = None,
         certfile: Optional[str] = None,
         keyfile: Optional[str] = None,
+        insecure_host: Optional[str] = None,
+        insecure_port: Optional[int] = None,
         **kwargs: Any,
     ) -> None:
         """Run this application.
@@ -68,6 +70,10 @@ class QuartTrio(Quart):
             certfile: Path to the SSL certificate file.
             ciphers: Ciphers to use for the SSL setup.
             keyfile: Path to the SSL key file.
+            insecure_host: Hostname to listen on. By default this is loopback
+                only, use 0.0.0.0 to have the server listen externally.
+                SSL options will not apply to this bind.
+            insecure_port: Port number to listen on for the insecure host.
         """
         if kwargs:
             warnings.warn(
@@ -79,7 +85,7 @@ class QuartTrio(Quart):
         scheme = "https" if certfile is not None and keyfile is not None else "http"
         print(f"Running on {scheme}://{host}:{port} (CTRL + C to quit)")  # noqa: T201
 
-        trio.run(self.run_task, host, port, debug, ca_certs, certfile, keyfile)  # type: ignore
+        trio.run(self.run_task, host, port, debug, ca_certs, certfile, keyfile, insecure_host, insecure_port)  # type: ignore
 
     def run_task(
         self,
@@ -89,6 +95,8 @@ class QuartTrio(Quart):
         ca_certs: Optional[str] = None,
         certfile: Optional[str] = None,
         keyfile: Optional[str] = None,
+        insecure_host: Optional[str] = None,
+        insecure_port: Optional[int] = None,
         shutdown_trigger: Optional[Callable[..., Awaitable[None]]] = None,
     ) -> Coroutine[None, None, None]:
         """Return a task that when awaited runs this application.
@@ -108,12 +116,17 @@ class QuartTrio(Quart):
             ca_certs: Path to the SSL CA certificate file.
             certfile: Path to the SSL certificate file.
             keyfile: Path to the SSL key file.
-
+            insecure_host: Hostname to listen on. By default this is loopback
+                only, use 0.0.0.0 to have the server listen externally.
+                SSL options will not apply to this bind.
+            insecure_port: Port number to listen on for the insecure host.
         """
         config = HyperConfig()
         config.access_log_format = "%(h)s %(r)s %(s)s %(b)s %(D)s"
         config.accesslog = "-"
         config.bind = [f"{host}:{port}"]
+        if all([insecure_host, insecure_port]):
+            config.insecure_bind = [f"{insecure_host}:{insecure_port}"]
         config.ca_certs = ca_certs
         config.certfile = certfile
         if debug is not None:
