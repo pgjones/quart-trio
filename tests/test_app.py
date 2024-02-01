@@ -1,11 +1,14 @@
 from typing import NoReturn
+import sys
 
 import pytest
-from exceptiongroup import BaseExceptionGroup
 from quart import ResponseReturnValue
 from quart.testing import WebsocketResponseError
 
 from quart_trio import QuartTrio
+
+if sys.version_info < (3, 11):
+    from exceptiongroup import BaseExceptionGroup
 
 
 @pytest.fixture(name="error_app", scope="function")

@@ -3,7 +3,6 @@ import warnings
 from typing import Any, Awaitable, Callable, Coroutine, Optional, TypeVar, Union
 
 import trio
-from exceptiongroup import BaseExceptionGroup
 from hypercorn.config import Config as HyperConfig
 from hypercorn.trio import serve
 from quart import Quart, request_started, websocket_started
@@ -24,6 +23,9 @@ try:
     from typing import ParamSpec
 except ImportError:
     from typing_extensions import ParamSpec  # type: ignore
+
+if sys.version_info < (3, 11):
+    from exceptiongroup import BaseExceptionGroup
 
 T = TypeVar("T")
 P = ParamSpec("P")

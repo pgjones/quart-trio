@@ -1,9 +1,9 @@
 from functools import partial
+import sys
 from typing import cast, Optional, TYPE_CHECKING, Union
 from urllib.parse import urlparse
 
 import trio
-from exceptiongroup import BaseExceptionGroup
 from hypercorn.typing import (
     ASGIReceiveCallable,
     ASGISendCallable,
@@ -21,6 +21,9 @@ from werkzeug.datastructures import Headers
 
 if TYPE_CHECKING:
     from quart_trio import QuartTrio  # noqa: F401
+
+if sys.version_info < (3, 11):
+    from exceptiongroup import BaseExceptionGroup
 
 
 class TrioASGIHTTPConnection(ASGIHTTPConnection):
