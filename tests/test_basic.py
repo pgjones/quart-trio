@@ -1,3 +1,4 @@
+import sys
 from pathlib import Path
 
 import pytest
@@ -5,6 +6,9 @@ from quart import abort, Quart, ResponseReturnValue, send_file, websocket
 from quart.testing import WebsocketResponseError
 
 from quart_trio import QuartTrio
+
+if sys.version_info < (3, 11):
+    from exceptiongroup import BaseExceptionGroup
 
 
 @pytest.fixture
@@ -53,8 +57,10 @@ async def test_websocket_abort(app: Quart) -> None:
     try:
         async with test_client.websocket("/ws/abort/") as test_websocket:
             await test_websocket.receive()
-    except WebsocketResponseError as error:
-        assert error.response.status_code == 401
+    except BaseExceptionGroup as error:
+        for exception in error.exceptions:
+            if isinstance(exception, WebsocketResponseError):
+                assert exception.response.status_code == 401
 
 
 @pytest.mark.trio
