@@ -1,5 +1,5 @@
-from functools import partial
 import sys
+from functools import partial
 from typing import cast, Optional, TYPE_CHECKING, Union
 from urllib.parse import urlparse
 
@@ -77,7 +77,9 @@ class TrioASGIWebsocketConnection(ASGIWebsocketConnection):
             event = await receive()
             if event["type"] == "websocket.receive":
                 message = event.get("bytes") or event["text"]
-                await websocket_received.send_async(message, _sync_wrapper=self.app.ensure_async)
+                await websocket_received.send_async(
+                    message, _sync_wrapper=self.app.ensure_async  # type: ignore
+                )
                 await self.send_channel.send(message)
             elif event["type"] == "websocket.disconnect":
                 break

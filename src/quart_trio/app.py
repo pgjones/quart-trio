@@ -165,7 +165,7 @@ class QuartTrio(Quart):
                 omits this argument.
         """
         try:
-            await request_started.send_async(self, _sync_wrapper=self.ensure_async)
+            await request_started.send_async(self, _sync_wrapper=self.ensure_async)  # type: ignore
 
             result: ResponseReturnValue | HTTPException | None
             result = await self.preprocess_request(request_context)
@@ -219,7 +219,9 @@ class QuartTrio(Quart):
                 the Flask convention.
         """
         try:
-            await websocket_started.send_async(self, _sync_wrapper=self.ensure_async)
+            await websocket_started.send_async(
+                self, _sync_wrapper=self.ensure_async  # type: ignore
+            )
 
             result: ResponseReturnValue | HTTPException | None
             result = await self.preprocess_websocket(websocket_context)
@@ -291,7 +293,7 @@ class QuartTrio(Quart):
                         raise RuntimeError("While serving generator didn't terminate")
         except Exception as error:
             await got_serving_exception.send_async(
-                self, _sync_wrapper=self.ensure_async, exception=error
+                self, _sync_wrapper=self.ensure_async, exception=error  # type: ignore
             )
             self.log_exception(sys.exc_info())
             raise
