@@ -19,7 +19,10 @@ classifiers = [
     "Topic :: Internet :: WWW/HTTP :: Dynamic Content",
     "Topic :: Software Development :: Libraries :: Python Modules",
 ]
-include = ["src/quart_trio/py.typed"]
+include = [
+    { path = "src/quart_trio/py.typed" },
+    { path = "tests", format = "sdist" },
+]
 license = "MIT"
 readme = "README.rst"
 repository = "https://github.com/pgjones/quart-trio/"
