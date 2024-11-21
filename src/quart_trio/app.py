@@ -92,6 +92,7 @@ class QuartTrio(Quart):
         certfile: Optional[str] = None,
         keyfile: Optional[str] = None,
         shutdown_trigger: Optional[Callable[..., Awaitable[None]]] = None,
+        task_status: trio.TaskStatus = trio.TASK_STATUS_IGNORED,
     ) -> Coroutine[None, None, None]:
         """Return a task that when awaited runs this application.
 
@@ -123,7 +124,8 @@ class QuartTrio(Quart):
         config.errorlog = config.accesslog
         config.keyfile = keyfile
 
-        return serve(self, config, shutdown_trigger=shutdown_trigger)
+        return serve(self, config, shutdown_trigger=shutdown_trigger,
+                     task_status=task_status)
 
     def sync_to_async(self, func: Callable[P, T]) -> Callable[P, Awaitable[T]]:
         """Return a async function that will run the synchronous function *func*.
