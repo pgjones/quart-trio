@@ -1,8 +1,10 @@
-[tool.poetry]
+[project]
 name = "quart-trio"
 version = "0.11.1"
 description = "A Quart extension to provide trio support"
-authors = ["pgjones <philip.graham.jones@googlemail.com>"]
+authors = [
+    {name = "pgjones", email = "philip.graham.jones@googlemail.com"},
+]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Environment :: Web Environment",
@@ -20,9 +22,19 @@ classifiers = [
     "Topic :: Software Development :: Libraries :: Python Modules",
 ]
 include = ["src/quart_trio/py.typed"]
-license = "MIT"
+license = {text = "MIT"}
 readme = "README.rst"
 repository = "https://github.com/pgjones/quart-trio/"
+dependencies = [
+    "exceptiongroup >= 1.1.0; python_version < '3.11'",
+    "hypercorn[trio] >= 0.12.0",
+    "quart >= 0.19",
+    "trio >= 0.19.0",
+]
+requires-python = ">=3.9"
+
+[project.optional-dependencies]
+docs = ["pydata_sphinx_theme"]
 
 [tool.black]
 line-length = 100
@@ -60,20 +72,6 @@ warn_unused_ignores = true
 module =["trio.*"]
 ignore_missing_imports = true
 
-[tool.poetry.dependencies]
-pydata_sphinx_theme = { version = "*", optional = true }
-python = ">=3.9"
-hypercorn = { version = ">=0.12.0", extras = ["trio"] }
-quart = ">=0.19"
-trio = ">=0.19.0"
-exceptiongroup = { version = ">= 1.1.0", python = "<3.11" }
-
-[tool.poetry.dev-dependencies]
-tox = "*"
-
-[tool.poetry.extras]
-docs = ["pydata_sphinx_theme"]
-
 [tool.pytest.ini_options]
 addopts = "--no-cov-on-fail --showlocals --strict-markers"
 asyncio_default_fixture_loop_scope = "session"
@@ -81,5 +79,5 @@ asyncio_mode = "auto"
 testpaths = ["tests"]
 
 [build-system]
-requires = ["poetry_core>=1.0.0"]
-build-backend = "poetry.core.masonry.api"
+requires = ["pdm-backend"]
+build-backend = "pdm.backend"
