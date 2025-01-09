@@ -124,8 +124,7 @@ class QuartTrio(Quart):
         config.errorlog = config.accesslog
         config.keyfile = keyfile
 
-        return serve(self, config, shutdown_trigger=shutdown_trigger,
-                     task_status=task_status)
+        return serve(self, config, shutdown_trigger=shutdown_trigger, task_status=task_status)
 
     def sync_to_async(self, func: Callable[P, T]) -> Callable[P, Awaitable[T]]:
         """Return a async function that will run the synchronous function *func*.
