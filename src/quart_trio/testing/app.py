@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from contextlib import AbstractAsyncContextManager
 from types import TracebackType
 
 import trio
@@ -21,7 +22,7 @@ class TrioTestApp:
         self._startup = trio.Event()
         self._shutdown = trio.Event()
         self._app_send_channel, self._app_receive_channel = trio.open_memory_channel[dict](10)
-        self._nursery_manager: trio._core._run.NurseryManager  # type: ignore
+        self._nursery_manager: AbstractAsyncContextManager[trio.Nursery]
         self._nursery: trio.Nursery
 
     def test_client(self) -> TestClientProtocol:

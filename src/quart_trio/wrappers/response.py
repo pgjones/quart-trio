@@ -29,7 +29,7 @@ class TrioFileBody(ResponseBody):
         self.end = self.size
         if buffer_size is not None:
             self.buffer_size = buffer_size
-        self.file: Optional[trio._file_io.AsyncIOWrapper] = None  # type: ignore
+        self.file: Optional[trio._file_io.AsyncIOWrapper] = None
 
     async def __aenter__(self) -> "TrioFileBody":
         self.file = await trio.open_file(self.file_path, mode="rb")

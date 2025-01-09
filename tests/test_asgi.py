@@ -22,6 +22,7 @@ async def test_websocket_complete_on_disconnect() -> None:
         "server": None,
         "subprotocols": [],
         "extensions": {"websocket.http.response": {}},
+        "state": {},  # type: ignore[typeddict-item]
     }
     connection = TrioASGIWebsocketConnection(QuartTrio(__name__), scope)
     send_channel, receive_channel = trio.open_memory_channel[dict](0)

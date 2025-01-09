@@ -1,4 +1,4 @@
-from typing import AnyStr, Optional
+from typing import Literal, Optional, overload, Union
 
 import trio
 from quart.wrappers.request import Body, Request
@@ -49,9 +49,22 @@ class TrioRequest(Request):
     form_data_parser_class = TrioFormDataParser
     lock_class = trio.Lock  # type: ignore
 
+    @overload
+    async def get_data(
+        self, cache: bool, as_text: Literal[False], parse_form_data: bool
+    ) -> bytes: ...
+
+    @overload
+    async def get_data(self, cache: bool, as_text: Literal[True], parse_form_data: bool) -> str: ...
+
+    @overload
     async def get_data(
         self, cache: bool = True, as_text: bool = False, parse_form_data: bool = False
-    ) -> AnyStr:
+    ) -> Union[str, bytes]: ...
+
+    async def get_data(
+        self, cache: bool = True, as_text: bool = False, parse_form_data: bool = False
+    ) -> Union[str, bytes]:
         if parse_form_data:
             await self._load_form_data()
 

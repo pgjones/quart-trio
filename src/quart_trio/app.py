@@ -81,7 +81,7 @@ class QuartTrio(Quart):
         scheme = "https" if certfile is not None and keyfile is not None else "http"
         print(f"Running on {scheme}://{host}:{port} (CTRL + C to quit)")  # noqa: T201
 
-        trio.run(self.run_task, host, port, debug, ca_certs, certfile, keyfile)  # type: ignore
+        trio.run(self.run_task, host, port, debug, ca_certs, certfile, keyfile)
 
     def run_task(
         self,
@@ -183,7 +183,7 @@ class QuartTrio(Quart):
         if isinstance(error, BaseExceptionGroup):
             for exception in error.exceptions:
                 try:
-                    return await self.handle_user_exception(exception)
+                    return await self.handle_user_exception(exception)  # type: ignore
                 except Exception:
                     pass  # No handler for this error
             # Not found a single handler, re-raise the error
@@ -235,7 +235,7 @@ class QuartTrio(Quart):
 
     async def open_instance_resource(
         self, path: FilePath, mode: str = "rb"
-    ) -> trio._file_io.AsyncIOWrapper:  # type: ignore
+    ) -> trio._file_io.AsyncIOWrapper:
         """Open a file for reading.
 
         Use as
@@ -247,9 +247,7 @@ class QuartTrio(Quart):
         """
         return await trio.open_file(self.instance_path / file_path_to_path(path), mode)
 
-    async def open_resource(
-        self, path: FilePath, mode: str = "rb"
-    ) -> trio._file_io.AsyncIOWrapper:  # type: ignore
+    async def open_resource(self, path: FilePath, mode: str = "rb") -> trio._file_io.AsyncIOWrapper:
         """Open a file for reading.
 
         Use as
