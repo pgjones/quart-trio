@@ -22,7 +22,7 @@ from .wrappers import TrioRequest, TrioResponse, TrioWebsocket
 try:
     from typing import ParamSpec
 except ImportError:
-    from typing_extensions import ParamSpec  # type: ignore
+    from typing_extensions import ParamSpec
 
 if sys.version_info < (3, 11):
     from exceptiongroup import BaseExceptionGroup
