@@ -1,3 +1,5 @@
+from unittest.mock import AsyncMock
+
 import pytest
 import trio
 from hypercorn.typing import WebsocketScope
@@ -25,10 +27,11 @@ async def test_websocket_complete_on_disconnect() -> None:
         "state": {},  # type: ignore[typeddict-item]
     }
     connection = TrioASGIWebsocketConnection(QuartTrio(__name__), scope)
+    websocket = connection._create_websocket_from_scope(AsyncMock())
     send_channel, receive_channel = trio.open_memory_channel[dict](0)
     async with trio.open_nursery() as nursery:
         nursery.start_soon(
-            connection.handle_messages, nursery, receive_channel.receive  # type: ignore
+            connection.handle_messages, nursery, websocket, receive_channel.receive  # type: ignore
         )
         await send_channel.send({"type": "websocket.disconnect"})
         await trio.sleep(1)  # Simulate doing something else
