@@ -7,14 +7,11 @@ import trio
 from hypercorn.typing import HTTPScope, WebsocketScope
 from quart.app import Quart
 from quart.json import dumps, loads
-from quart.testing.connections import (
-    HTTPDisconnectError,
-    WebsocketDisconnectError,
-    WebsocketResponseError,
-)
+from quart.testing.connections import WebsocketResponseError
 from quart.typing import TestHTTPConnectionProtocol, TestWebsocketConnectionProtocol
 from quart.utils import decode_headers
 from quart.wrappers import Response
+from quart.wrappers.base import ClientDisconnectedError
 from werkzeug.datastructures import Headers
 
 
@@ -64,7 +61,7 @@ class TestHTTPConnection:
                 async for data in self._client_receive:
                     if isinstance(data, bytes):
                         self.response_data.extend(data)
-                    elif not isinstance(data, HTTPDisconnectError):
+                    else:
                         raise data
         except trio.ClosedResourceError:
             pass
@@ -92,9 +89,6 @@ class TestHTTPConnection:
                 await self._client_send.aclose()
         elif message["type"] == "http.response.push":
             self.push_promises.append((message["path"], decode_headers(message["headers"])))
-        elif message["type"] == "http.disconnect":
-            await self._client_send.send(HTTPDisconnectError())
-            await self._client_send.aclose()
 
 
 class TestWebsocketConnection:
@@ -172,5 +166,5 @@ class TestWebsocketConnection:
                     )
                 )
         elif message["type"] == "websocket.close":
-            await self._client_send.send(WebsocketDisconnectError(message.get("code", 1000)))
+            await self._client_send.send(ClientDisconnectedError(message.get("code", 1000)))
             await self._client_send.aclose()

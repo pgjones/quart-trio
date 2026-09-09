@@ -28,10 +28,10 @@ repository = "https://github.com/pgjones/quart-trio/"
 dependencies = [
     "exceptiongroup >= 1.1.0; python_version < '3.11'",
     "hypercorn[trio] >= 0.12.0",
-    "quart >= 0.19",
+    "quart >= 0.23",
     "trio >= 0.19.0",
 ]
-requires-python = ">=3.9"
+requires-python = ">=3.13"
 
 [project.optional-dependencies]
 docs = ["pydata_sphinx_theme"]

@@ -4,6 +4,7 @@ import trio
 from quart.wrappers.request import Body, Request
 from werkzeug.exceptions import RequestEntityTooLarge, RequestTimeout
 
+from ..datastructures import TrioQueue
 from ..formparser import TrioFormDataParser
 
 
@@ -28,9 +29,9 @@ class TrioBody(Body):
     def __init__(
         self, expected_content_length: Optional[int], max_content_length: Optional[int]
     ) -> None:
-        self._data = bytearray()
+        self._data = None
         self._complete = EventWrapper()  # type: ignore
-        self._has_data = EventWrapper()  # type: ignore
+        self._queue = TrioQueue[bytes]()  # type: ignore
         self._max_content_length = max_content_length
         # Exceptions must be raised within application (not ASGI)
         # calls, this is achieved by having the ASGI methods set this

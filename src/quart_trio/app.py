@@ -6,7 +6,7 @@ import trio
 from hypercorn.config import Config as HyperConfig
 from hypercorn.trio import serve
 from quart import Quart, request_started, websocket_started
-from quart.ctx import RequestContext, WebsocketContext
+from quart.ctx import AppContext
 from quart.signals import got_serving_exception
 from quart.typing import FilePath, ResponseReturnValue
 from quart.utils import file_path_to_path
@@ -151,21 +151,20 @@ class QuartTrio(Quart):
                 if filtered_error is not None:
                     raise filtered_error
 
-                return await self.handle_exception(error)  # type: ignore
+                return await self.handle_exception(request_context, error)  # type: ignore
             except Exception as error:
-                return await self.handle_exception(error)
+                return await self.handle_exception(request_context, error)
             finally:
                 if request.scope.get("_quart._preserve_context", False):
                     self._preserved_context = request_context.copy()
 
     async def full_dispatch_request(
-        self, request_context: Optional[RequestContext] = None
+        self, request_context: AppContext
     ) -> Union[Response, WerkzeugResponse]:
         """Adds pre and post processing to the request dispatching.
 
         Arguments:
-            request_context: The request context, optional as Flask
-                omits this argument.
+            request_context: The context containing the request.
         """
         try:
             await request_started.send_async(self, _sync_wrapper=self.ensure_async)  # type: ignore
@@ -175,22 +174,22 @@ class QuartTrio(Quart):
             if result is None:
                 result = await self.dispatch_request(request_context)
         except (Exception, BaseExceptionGroup) as error:
-            result = await self.handle_user_exception(error)
-        return await self.finalize_request(result, request_context)
+            result = await self.handle_user_exception(request_context, error)
+        return await self.finalize_request(request_context, result)
 
     async def handle_user_exception(
-        self, error: Union[Exception, BaseExceptionGroup]
+        self, ctx: AppContext, error: Union[Exception, BaseExceptionGroup]
     ) -> Union[HTTPException, ResponseReturnValue]:
         if isinstance(error, BaseExceptionGroup):
             for exception in error.exceptions:
                 try:
-                    return await self.handle_user_exception(exception)  # type: ignore
+                    return await self.handle_user_exception(ctx, exception)  # type: ignore
                 except Exception:
                     pass  # No handler for this error
             # Not found a single handler, re-raise the error
             raise error
         else:
-            return await super().handle_user_exception(error)
+            return await super().handle_user_exception(ctx, error)
 
     async def handle_websocket(
         self, websocket: Websocket
@@ -205,21 +204,20 @@ class QuartTrio(Quart):
                 if filtered_error is not None:
                     raise filtered_error
 
-                return await self.handle_websocket_exception(error)  # type: ignore
+                return await self.handle_websocket_exception(websocket_context, error)  # type: ignore
             except Exception as error:
-                return await self.handle_websocket_exception(error)
+                return await self.handle_websocket_exception(websocket_context, error)
             finally:
                 if websocket.scope.get("_quart._preserve_context", False):
                     self._preserved_context = websocket_context.copy()
 
     async def full_dispatch_websocket(
-        self, websocket_context: Optional[WebsocketContext] = None
+        self, websocket_context: AppContext
     ) -> Optional[Union[Response, WerkzeugResponse]]:
         """Adds pre and post processing to the websocket dispatching.
 
         Arguments:
-            websocket_context: The websocket context, optional to match
-                the Flask convention.
+            websocket_context: The context containing the websocket.
         """
         try:
             await websocket_started.send_async(
@@ -231,8 +229,8 @@ class QuartTrio(Quart):
             if result is None:
                 result = await self.dispatch_websocket(websocket_context)
         except (Exception, BaseExceptionGroup) as error:
-            result = await self.handle_user_exception(error)
-        return await self.finalize_websocket(result, websocket_context)
+            result = await self.handle_user_exception(websocket_context, error)
+        return await self.finalize_websocket(websocket_context, result)
 
     async def open_instance_resource(
         self, path: FilePath, mode: str = "rb"
@@ -265,11 +263,11 @@ class QuartTrio(Quart):
 
     def add_background_task(self, func: Callable, *args: Any, **kwargs: Any) -> None:
         async def _wrapper() -> None:
-            try:
-                async with self.app_context():
+            async with self.app_context() as ctx:
+                try:
                     await self.ensure_async(func)(*args, **kwargs)
-            except (BaseExceptionGroup, Exception) as error:
-                await self.handle_background_exception(error)  # type: ignore
+                except (BaseExceptionGroup, Exception) as error:
+                    await self.handle_background_exception(ctx, error)  # type: ignore
 
         self.nursery.start_soon(_wrapper)
 
@@ -281,8 +279,8 @@ class QuartTrio(Quart):
         else:
             self.nursery.cancel_scope.cancel()
 
-        try:
-            async with self.app_context():
+        async with self.app_context() as ctx:
+            try:
                 for func in self.after_serving_funcs:
                     await self.ensure_async(func)()
                 for gen in self.while_serving_gens:
@@ -292,9 +290,9 @@ class QuartTrio(Quart):
                         pass
                     else:
                         raise RuntimeError("While serving generator didn't terminate")
-        except Exception as error:
-            await got_serving_exception.send_async(
-                self, _sync_wrapper=self.ensure_async, exception=error  # type: ignore
-            )
-            self.log_exception(sys.exc_info())
-            raise
+            except Exception as error:
+                await got_serving_exception.send_async(
+                    self, _sync_wrapper=self.ensure_async, exception=error  # type: ignore
+                )
+                self.log_exception(ctx, sys.exc_info())
+                raise
