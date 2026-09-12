@@ -79,7 +79,7 @@ class TrioIterableBody(IterableBody):
         if isasyncgen(iterable):
             self.iter = iterable
         elif isgenerator(iterable):
-            self.iter = run_sync_iterable(iterable)
+            self.iter = run_sync_iterable(iterable)  # type: ignore
         else:
 
             async def _aiter() -> AsyncGenerator[bytes, None]:
@@ -91,4 +91,4 @@ class TrioIterableBody(IterableBody):
 
 class TrioResponse(Response):
     file_body_class = TrioFileBody  # type: ignore
-    iterable_body_class = TrioIterableBody
+    iterable_body_class = TrioIterableBody  # type: ignore

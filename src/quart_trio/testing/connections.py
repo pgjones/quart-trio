@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from types import TracebackType
-from typing import Any, AnyStr, Awaitable, List, Optional, Tuple, Union
+from typing import Any, Awaitable, List, Optional, Tuple, Union
 
 import trio
 from hypercorn.typing import HTTPScope, WebsocketScope
@@ -115,14 +115,14 @@ class TestWebsocketConnection:
         await self.disconnect()
         await self._nursery_manager.__aexit__(exc_type, exc_value, tb)
 
-    async def receive(self) -> AnyStr:
+    async def receive(self) -> str | bytes:
         data = await self._client_receive.receive()
         if isinstance(data, Exception):
             raise data
         else:
-            return data  # type: ignore
+            return data
 
-    async def send(self, data: AnyStr) -> None:
+    async def send(self, data: str | bytes) -> None:
         if isinstance(data, str):
             await self._server_send.send({"type": "websocket.receive", "text": data})
         else:

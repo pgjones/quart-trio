@@ -18,7 +18,7 @@ def run_sync(func: Callable[..., Any]) -> Callable[..., Coroutine[Any, None, Non
     async def _wrapper(*args: Any, **kwargs: Any) -> Any:
         result = await trio.to_thread.run_sync(copy_context().run, partial(func, *args, **kwargs))
         if isgenerator(result):
-            return run_sync_iterable(result)
+            return run_sync_iterable(result)  # type: ignore
         else:
             return result
 

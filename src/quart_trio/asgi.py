@@ -1,4 +1,3 @@
-import sys
 from typing import cast, Optional, TYPE_CHECKING
 
 import trio
@@ -17,9 +16,6 @@ from quart.wrappers import Request, Response, Websocket  # noqa: F401
 
 if TYPE_CHECKING:
     from quart_trio import QuartTrio  # noqa: F401
-
-if sys.version_info < (3, 11):
-    from exceptiongroup import BaseExceptionGroup
 
 
 class TrioASGIHTTPConnection(ASGIHTTPConnection):

@@ -1,6 +1,6 @@
 import sys
 import warnings
-from typing import Any, Awaitable, Callable, Coroutine, Optional, TypeVar, Union
+from typing import Any, Awaitable, Callable, Coroutine, Optional, ParamSpec, TypeVar, Union
 
 import trio
 from hypercorn.config import Config as HyperConfig
@@ -8,24 +8,15 @@ from hypercorn.trio import serve
 from quart import Quart, request_started, websocket_started
 from quart.ctx import AppContext
 from quart.signals import got_serving_exception
-from quart.typing import FilePath, ResponseReturnValue
+from quart.typing import FilePath, ResponseReturnValue, ResponseTypes
 from quart.utils import file_path_to_path
-from quart.wrappers import Request, Response, Websocket
+from quart.wrappers import Request, Websocket
 from werkzeug.exceptions import HTTPException
-from werkzeug.wrappers import Response as WerkzeugResponse
 
 from .asgi import TrioASGIHTTPConnection, TrioASGILifespan, TrioASGIWebsocketConnection
 from .testing import TrioClient, TrioTestApp
 from .utils import run_sync
 from .wrappers import TrioRequest, TrioResponse, TrioWebsocket
-
-try:
-    from typing import ParamSpec
-except ImportError:
-    from typing_extensions import ParamSpec
-
-if sys.version_info < (3, 11):
-    from exceptiongroup import BaseExceptionGroup
 
 T = TypeVar("T")
 P = ParamSpec("P")
@@ -140,10 +131,10 @@ class QuartTrio(Quart):
         """
         return run_sync(func)
 
-    async def handle_request(self, request: Request) -> Union[Response, WerkzeugResponse]:
-        async with self.request_context(request) as request_context:
+    async def handle_request(self, request: Request) -> ResponseTypes:
+        async with self.request_context(request) as ctx:
             try:
-                return await self.full_dispatch_request(request_context)
+                return await self.full_dispatch_request(ctx)
             except trio.Cancelled:
                 raise  # Cancelled should be handled by serving code.
             except BaseExceptionGroup as error:
@@ -151,16 +142,14 @@ class QuartTrio(Quart):
                 if filtered_error is not None:
                     raise filtered_error
 
-                return await self.handle_exception(request_context, error)  # type: ignore
+                return await self.handle_exception(ctx, error)  # type: ignore
             except Exception as error:
-                return await self.handle_exception(request_context, error)
+                return await self.handle_exception(ctx, error)
             finally:
                 if request.scope.get("_quart._preserve_context", False):
-                    self._preserved_context = request_context.copy()
+                    self._preserved_context = ctx.copy()
 
-    async def full_dispatch_request(
-        self, request_context: AppContext
-    ) -> Union[Response, WerkzeugResponse]:
+    async def full_dispatch_request(self, ctx: AppContext) -> ResponseTypes:
         """Adds pre and post processing to the request dispatching.
 
         Arguments:
@@ -170,12 +159,12 @@ class QuartTrio(Quart):
             await request_started.send_async(self, _sync_wrapper=self.ensure_async)  # type: ignore
 
             result: ResponseReturnValue | HTTPException | None
-            result = await self.preprocess_request(request_context)
+            result = await self.preprocess_request(ctx)
             if result is None:
-                result = await self.dispatch_request(request_context)
+                result = await self.dispatch_request(ctx)
         except (Exception, BaseExceptionGroup) as error:
-            result = await self.handle_user_exception(request_context, error)
-        return await self.finalize_request(request_context, result)
+            result = await self.handle_user_exception(ctx, error)
+        return await self.finalize_request(ctx, result)
 
     async def handle_user_exception(
         self, ctx: AppContext, error: Union[Exception, BaseExceptionGroup]
@@ -191,12 +180,10 @@ class QuartTrio(Quart):
         else:
             return await super().handle_user_exception(ctx, error)
 
-    async def handle_websocket(
-        self, websocket: Websocket
-    ) -> Optional[Union[Response, WerkzeugResponse]]:
-        async with self.websocket_context(websocket) as websocket_context:
+    async def handle_websocket(self, websocket: Websocket) -> ResponseTypes | None:
+        async with self.websocket_context(websocket) as ctx:
             try:
-                return await self.full_dispatch_websocket(websocket_context)
+                return await self.full_dispatch_websocket(ctx)
             except trio.Cancelled:
                 raise  # Cancelled should be handled by serving code.
             except BaseExceptionGroup as error:
@@ -204,16 +191,14 @@ class QuartTrio(Quart):
                 if filtered_error is not None:
                     raise filtered_error
 
-                return await self.handle_websocket_exception(websocket_context, error)  # type: ignore
+                return await self.handle_websocket_exception(ctx, error)  # type: ignore
             except Exception as error:
-                return await self.handle_websocket_exception(websocket_context, error)
+                return await self.handle_websocket_exception(ctx, error)
             finally:
                 if websocket.scope.get("_quart._preserve_context", False):
-                    self._preserved_context = websocket_context.copy()
+                    self._preserved_context = ctx.copy()
 
-    async def full_dispatch_websocket(
-        self, websocket_context: AppContext
-    ) -> Optional[Union[Response, WerkzeugResponse]]:
+    async def full_dispatch_websocket(self, ctx: AppContext) -> ResponseTypes:
         """Adds pre and post processing to the websocket dispatching.
 
         Arguments:
@@ -225,12 +210,12 @@ class QuartTrio(Quart):
             )
 
             result: ResponseReturnValue | HTTPException | None
-            result = await self.preprocess_websocket(websocket_context)
+            result = await self.preprocess_websocket(ctx)
             if result is None:
-                result = await self.dispatch_websocket(websocket_context)
+                result = await self.dispatch_websocket(ctx)
         except (Exception, BaseExceptionGroup) as error:
-            result = await self.handle_user_exception(websocket_context, error)
-        return await self.finalize_websocket(websocket_context, result)
+            result = await self.handle_user_exception(ctx, error)
+        return await self.finalize_websocket(ctx, result)
 
     async def open_instance_resource(
         self, path: FilePath, mode: str = "rb"
@@ -281,15 +266,15 @@ class QuartTrio(Quart):
 
         async with self.app_context() as ctx:
             try:
-                for func in self.after_serving_funcs:
-                    await self.ensure_async(func)()
-                for gen in self.while_serving_gens:
+                for gen in reversed(self.while_serving_gens):
                     try:
                         await gen.__anext__()
                     except StopAsyncIteration:
                         pass
                     else:
                         raise RuntimeError("While serving generator didn't terminate")
+                for func in self.after_serving_funcs:
+                    await self.ensure_async(func)()
             except Exception as error:
                 await got_serving_exception.send_async(
                     self, _sync_wrapper=self.ensure_async, exception=error  # type: ignore

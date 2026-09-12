@@ -1,5 +1,3 @@
-from typing import AnyStr
-
 from quart.wrappers.websocket import Buffer, Websocket
 
 from ..datastructures import TrioQueue
@@ -13,6 +11,6 @@ class TrioBuffer(Buffer):
 class TrioWebsocket(Websocket):
     buffer_class = TrioBuffer
 
-    async def send(self, data: AnyStr) -> None:
+    async def send(self, data: str | bytes) -> None:
         await self.accept()
         await self._send(data)
